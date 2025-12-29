@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +19,13 @@ class LoginPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  topToggle(isLogin: true),
+                  topToggle(isLogin: false),
                   const SizedBox(height: 30),
 
                   const Text(
-                    "Welcome Back!",
+                    "Create Account",
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -34,11 +33,39 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Sign in to continue your learning journey",
+                    "Start your personalized English learning experience",
                     style: TextStyle(color: Colors.grey),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.auto_awesome, color: Colors.orange),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "AI Personalization Available\nWe’ll customize your learning experience based on your goals.",
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  inputField(
+                    label: "Full Name",
+                    hint: "John Doe",
+                    icon: Icons.person_outline,
+                  ),
+
+                  const SizedBox(height: 16),
                   inputField(
                     label: "Email",
                     hint: "you@example.com",
@@ -53,34 +80,27 @@ class LoginPage extends StatelessWidget {
                     isPassword: true,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   Row(
                     children: [
                       Checkbox(value: false, onChanged: (_) {}),
-                      const Text("Remember me"),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text("Forgot password?"),
+                      const Expanded(
+                        child: Text(
+                          "I agree to the Terms of Service and Privacy Policy",
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 15),
-                  primaryButton("Sign In"),
+                  primaryButton("Create Account"),
 
                   const SizedBox(height: 20),
                   divider(),
                   const SizedBox(height: 20),
 
                   socialButtons(),
-
-                  const SizedBox(height: 15),
-                  bottomText(
-                    text: "Don't have an account?",
-                    action: "Sign up",
-                    onTap: () {},
-                  ),
                 ],
               ),
             ),
