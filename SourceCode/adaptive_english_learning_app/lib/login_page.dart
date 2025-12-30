@@ -1,9 +1,59 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
+import 'signup_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
+
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final user = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (user != null) {
+        final role = await _authService.getUserRole(user.uid);
+
+        if (role == 'teacher') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const TeacherDashboard(),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const StudentDashboard(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,78 +65,90 @@ class LoginPage extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            elevation: 8,
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  topToggle(isLogin: true),
-                  const SizedBox(height: 30),
+                  topToggle(
+                    isLogin: true,
+                    onLoginTap: () {},
+                    onSignUpTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SignUpPage(),
+                        ),
+                      );
+                    },
+                  ),
 
+                  const SizedBox(height: 30),
                   const Text(
-                    "Welcome Back!",
+                    "Welcome Back",
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Sign in to continue your learning journey",
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const SizedBox(height: 20),
 
-                  const SizedBox(height: 25),
                   inputField(
                     label: "Email",
                     hint: "you@example.com",
-                    icon: Icons.email_outlined,
+                    icon: Icons.email,
+                    controller: _emailController,
                   ),
-
                   const SizedBox(height: 16),
+
                   inputField(
                     label: "Password",
                     hint: "••••••••",
-                    icon: Icons.lock_outline,
+                    icon: Icons.lock,
                     isPassword: true,
+                    controller: _passwordController,
                   ),
 
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Checkbox(value: false, onChanged: (_) {}),
-                      const Text("Remember me"),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text("Forgot password?"),
-                      ),
-                    ],
-                  ),
+                  const SizedBox(height: 24),
 
-                  const SizedBox(height: 15),
-                  primaryButton("Sign In"),
-
-                  const SizedBox(height: 20),
-                  divider(),
-                  const SizedBox(height: 20),
-
-                  socialButtons(),
-
-                  const SizedBox(height: 15),
-                  bottomText(
-                    text: "Don't have an account?",
-                    action: "Sign up",
-                    onTap: () {},
-                  ),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : primaryButton(
+                          "Sign In",
+                          onPressed: _login,
+                        ),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ======================
+// DASHBOARDS (PLACEHOLDER)
+// ======================
+
+class StudentDashboard extends StatelessWidget {
+  const StudentDashboard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text("Student Dashboard")),
+    );
+  }
+}
+
+class TeacherDashboard extends StatelessWidget {
+  const TeacherDashboard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text("Teacher Dashboard")),
     );
   }
 }

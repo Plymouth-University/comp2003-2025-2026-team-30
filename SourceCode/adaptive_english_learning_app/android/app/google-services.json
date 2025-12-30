@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "9423294140",
+    "project_id": "engai-auth",
+    "storage_bucket": "engai-auth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9423294140:android:7dacf4468a842f5f758ab9",
+        "android_client_info": {
+          "package_name": "com.example.adaptive_english_learning_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBetabjNm_LjNOuQHAP5sC6zAAP9E7_Yjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

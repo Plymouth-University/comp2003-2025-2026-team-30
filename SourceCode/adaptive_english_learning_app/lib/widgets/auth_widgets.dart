@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
-Widget topToggle({required bool isLogin}) {
+/// ===========================
+/// TOP LOGIN / SIGNUP TOGGLE
+/// ===========================
+Widget topToggle({
+  required bool isLogin,
+  required VoidCallback onLoginTap,
+  required VoidCallback onSignUpTap,
+}) {
   return Container(
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
@@ -9,34 +16,40 @@ Widget topToggle({required bool isLogin}) {
     child: Row(
       children: [
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isLogin ? Colors.blue : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                "Login",
-                style: TextStyle(
-                  color: isLogin ? Colors.white : Colors.black,
+          child: GestureDetector(
+            onTap: onLoginTap,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isLogin ? Colors.blue : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  "Login",
+                  style: TextStyle(
+                    color: isLogin ? Colors.white : Colors.black,
+                  ),
                 ),
               ),
             ),
           ),
         ),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: !isLogin ? Colors.blue : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                "Sign Up",
-                style: TextStyle(
-                  color: !isLogin ? Colors.white : Colors.black,
+          child: GestureDetector(
+            onTap: onSignUpTap,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: !isLogin ? Colors.blue : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  "Sign Up",
+                  style: TextStyle(
+                    color: !isLogin ? Colors.white : Colors.black,
+                  ),
                 ),
               ),
             ),
@@ -47,10 +60,14 @@ Widget topToggle({required bool isLogin}) {
   );
 }
 
+/// ===========================
+/// INPUT FIELD
+/// ===========================
 Widget inputField({
   required String label,
   required String hint,
   required IconData icon,
+  TextEditingController? controller,
   bool isPassword = false,
 }) {
   return Column(
@@ -59,6 +76,7 @@ Widget inputField({
       Text(label),
       const SizedBox(height: 6),
       TextField(
+        controller: controller,
         obscureText: isPassword,
         decoration: InputDecoration(
           prefixIcon: Icon(icon),
@@ -72,22 +90,29 @@ Widget inputField({
   );
 }
 
-Widget primaryButton(String text) {
+/// ===========================
+/// PRIMARY BUTTON
+/// ===========================
+Widget primaryButton(
+  String text, {
+  required VoidCallback onPressed,
+}) {
   return SizedBox(
     width: double.infinity,
     height: 50,
     child: ElevatedButton(
-      onPressed: () {},
+      onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
       ),
-      child: Text(text),
+      child: Text(text, style: const TextStyle(fontSize: 16)),
     ),
   );
 }
+
 
 Widget divider() {
   return Row(

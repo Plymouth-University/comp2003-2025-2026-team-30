@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   smooth_page_indicator: ^2.0.1
   icons_plus: ^5.0.0
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.5.0
 
 dev_dependencies:
   flutter_test:

@@ -1,9 +1,50 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
+import 'login_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
+
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
+
+  String _selectedRole = 'student';
+  bool _isLoading = false;
+
+  Future<void> _signUp() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        role: _selectedRole,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created successfully")),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,15 +56,25 @@ class SignUpPage extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            elevation: 8,
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  topToggle(isLogin: false),
-                  const SizedBox(height: 30),
+                  topToggle(
+                    isLogin: false,
+                    onLoginTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LoginPage(),
+                        ),
+                      );
+                    },
+                    onSignUpTap: () {},
+                  ),
 
+                  const SizedBox(height: 30),
                   const Text(
                     "Create Account",
                     style: TextStyle(
@@ -31,76 +82,59 @@ class SignUpPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Start your personalized English learning experience",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.auto_awesome, color: Colors.orange),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            "AI Personalization Available\nWe’ll customize your learning experience based on your goals.",
-                            style: TextStyle(color: Colors.orange),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
-                  inputField(
-                    label: "Full Name",
-                    hint: "John Doe",
-                    icon: Icons.person_outline,
-                  ),
-
-                  const SizedBox(height: 16),
                   inputField(
                     label: "Email",
                     hint: "you@example.com",
-                    icon: Icons.email_outlined,
+                    icon: Icons.email,
+                    controller: _emailController,
                   ),
-
                   const SizedBox(height: 16),
+
                   inputField(
                     label: "Password",
                     hint: "••••••••",
-                    icon: Icons.lock_outline,
+                    icon: Icons.lock,
                     isPassword: true,
+                    controller: _passwordController,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "I am a:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+
                   Row(
                     children: [
-                      Checkbox(value: false, onChanged: (_) {}),
-                      const Expanded(
-                        child: Text(
-                          "I agree to the Terms of Service and Privacy Policy",
-                          style: TextStyle(fontSize: 13),
-                        ),
+                      ChoiceChip(
+                        label: const Text("Student"),
+                        selected: _selectedRole == 'student',
+                        onSelected: (_) {
+                          setState(() => _selectedRole = 'student');
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      ChoiceChip(
+                        label: const Text("Teacher"),
+                        selected: _selectedRole == 'teacher',
+                        onSelected: (_) {
+                          setState(() => _selectedRole = 'teacher');
+                        },
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 15),
-                  primaryButton("Create Account"),
+                  const SizedBox(height: 30),
 
-                  const SizedBox(height: 20),
-                  divider(),
-                  const SizedBox(height: 20),
-
-                  socialButtons(),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : primaryButton(
+                          "Create Account",
+                          onPressed: _signUp,
+                        ),
                 ],
               ),
             ),
