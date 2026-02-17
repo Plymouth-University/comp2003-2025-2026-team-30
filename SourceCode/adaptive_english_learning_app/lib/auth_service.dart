@@ -25,7 +25,6 @@ class AuthService {
   Future<User?> signUp({
     required String email,
     required String password,
-    required String role,
   }) async {
     final result = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -37,7 +36,6 @@ class AuthService {
     if (user != null) {
       await _firestore.collection('users').doc(user.uid).set({
         'email': email,
-        'role': role,
         'createdAt': Timestamp.now(),
       });
     }
@@ -45,14 +43,7 @@ class AuthService {
     return user;
   }
 
-  // ======================
-  // GET USER ROLE
-  // ======================
-  Future<String?> getUserRole(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
-    return doc.data()?['role'];
-  }
-
+  
   // ======================
   // SIGN OUT
   // ======================

@@ -19,41 +19,31 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   Future<void> _login() async {
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final user = await _authService.signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+  try {
+    final user = await _authService.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    if (user != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomeDashboard(), // single dashboard
+        ),
       );
-
-      if (user != null) {
-        final role = await _authService.getUserRole(user.uid);
-
-        if (role == 'teacher') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const TeacherDashboard(),
-            ),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const StudentDashboard(),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      setState(() => _isLoading = false);
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Login failed. Please check your credentials.")),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -131,24 +121,19 @@ class _LoginPageState extends State<LoginPage> {
 // DASHBOARDS (PLACEHOLDER)
 // ======================
 
-class StudentDashboard extends StatelessWidget {
-  const StudentDashboard({super.key});
+class HomeDashboard extends StatelessWidget {
+  const HomeDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text("Student Dashboard")),
+      body: Center(
+        child: Text(
+          "Welcome to Adaptive English Learning",
+          style: TextStyle(fontSize: 20),
+        ),
+      ),
     );
   }
 }
 
-class TeacherDashboard extends StatelessWidget {
-  const TeacherDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("Teacher Dashboard")),
-    );
-  }
-}

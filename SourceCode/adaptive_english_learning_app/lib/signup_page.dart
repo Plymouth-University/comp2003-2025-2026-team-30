@@ -16,7 +16,6 @@ class _SignUpPageState extends State<SignUpPage> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
-  String _selectedRole = 'student';
   bool _isLoading = false;
 
   Future<void> _signUp() async {
@@ -26,7 +25,6 @@ class _SignUpPageState extends State<SignUpPage> {
       await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        role: _selectedRole,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,7 +37,9 @@ class _SignUpPageState extends State<SignUpPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        const SnackBar(
+          content: Text("Signup failed. Please try again."),
+        ),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -75,6 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
 
                   const SizedBox(height: 30),
+
                   const Text(
                     "Create Account",
                     style: TextStyle(
@@ -82,6 +83,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
                   inputField(
@@ -90,6 +92,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     icon: Icons.email,
                     controller: _emailController,
                   ),
+
                   const SizedBox(height: 16),
 
                   inputField(
@@ -98,33 +101,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     icon: Icons.lock,
                     isPassword: true,
                     controller: _passwordController,
-                  ),
-
-                  const SizedBox(height: 20),
-                  const Text(
-                    "I am a:",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-
-                  Row(
-                    children: [
-                      ChoiceChip(
-                        label: const Text("Student"),
-                        selected: _selectedRole == 'student',
-                        onSelected: (_) {
-                          setState(() => _selectedRole = 'student');
-                        },
-                      ),
-                      const SizedBox(width: 10),
-                      ChoiceChip(
-                        label: const Text("Teacher"),
-                        selected: _selectedRole == 'teacher',
-                        onSelected: (_) {
-                          setState(() => _selectedRole = 'teacher');
-                        },
-                      ),
-                    ],
                   ),
 
                   const SizedBox(height: 30),
