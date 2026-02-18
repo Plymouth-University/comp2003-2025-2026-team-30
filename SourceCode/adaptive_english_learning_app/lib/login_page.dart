@@ -3,6 +3,7 @@ import 'auth_service.dart';
 import 'signup_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
+import 'package:adaptive_english_learning_app/widgets/main_navigation.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomeDashboard(), // single dashboard
+          builder: (_) => const MainNavigation(),
         ),
       );
     }
