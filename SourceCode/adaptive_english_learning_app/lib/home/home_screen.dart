@@ -16,9 +16,9 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _TopHeader(
-                name: "Maria",
+                name: "User",
                 streakDays: 7,
-                greeting: "Good afternoon",
+                greeting: "Good Day",
               ),
               const SizedBox(height: 16),
 
