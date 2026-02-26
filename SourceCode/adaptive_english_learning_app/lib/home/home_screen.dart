@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final VoidCallback onGoToLessons;
+
+  const HomeScreen({
+    super.key,
+    required this.onGoToLessons,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,52 +30,7 @@ class HomeScreen extends StatelessWidget {
               _DailyGoalCard(
                 done: 3,
                 total: 5,
-                onContinue: () {},
-              ),
-              const SizedBox(height: 18),
-
-              const _SectionTitle(title: "Recommended for You"),
-              const SizedBox(height: 10),
-              _RecommendedCard(
-                title: "Greetings & Introductions",
-                subtitle:
-                    "Learn how to introduce yourself and greet others\nin English",
-                level: "Beginner",
-                minutes: 15,
-                category: "Speaking",
-                onStart: () {},
-              ),
-              const SizedBox(height: 18),
-
-              const _SectionTitle(title: "Quick Practice"),
-              const SizedBox(height: 10),
-              _QuickPracticeGrid(
-                items: [
-                  _PracticeItem(
-                    title: "Practice Speaking",
-                    icon: Icons.mic_rounded,
-                    color: const Color(0xFFF59E0B),
-                    onTap: () {},
-                  ),
-                  _PracticeItem(
-                    title: "Vocabulary Builder",
-                    icon: Icons.collections_bookmark_rounded,
-                    color: const Color(0xFF22C55E),
-                    onTap: () {},
-                  ),
-                  _PracticeItem(
-                    title: "Grammar Tips",
-                    icon: Icons.lightbulb_rounded,
-                    color: const Color(0xFF3B82F6),
-                    onTap: () {},
-                  ),
-                  _PracticeItem(
-                    title: "Daily Quiz",
-                    icon: Icons.gps_fixed_rounded,
-                    color: const Color(0xFF8B5CF6),
-                    onTap: () {},
-                  ),
-                ],
+                onContinue: onGoToLessons, // ✅ Switch tab instead of pushing route
               ),
               const SizedBox(height: 18),
 
@@ -131,8 +91,11 @@ class _TopHeader extends StatelessWidget {
                   alignment: PlaceholderAlignment.middle,
                   child: Padding(
                     padding: EdgeInsets.only(left: 2),
-                    child: Icon(Icons.wb_sunny_rounded,
-                        size: 20, color: Color(0xFFF59E0B)),
+                    child: Icon(
+                      Icons.wb_sunny_rounded,
+                      size: 20,
+                      color: Color(0xFFF59E0B),
+                    ),
                   ),
                 ),
               ],
@@ -152,8 +115,7 @@ class _TopHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child:
-                const Icon(Icons.settings_rounded, color: Color(0xFF111827)),
+            child: const Icon(Icons.settings_rounded, color: Color(0xFF111827)),
           ),
         ),
       ],
@@ -353,204 +315,6 @@ class _ProgressRing extends StatelessWidget {
   }
 }
 
-/* ---------------- RECOMMENDED CARD ---------------- */
-
-class _RecommendedCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String category;
-  final String level;
-  final int minutes;
-  final VoidCallback onStart;
-
-  const _RecommendedCard({
-    required this.title,
-    required this.subtitle,
-    required this.category,
-    required this.level,
-    required this.minutes,
-    required this.onStart,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 8)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 120,
-            width: double.infinity,
-            color: const Color(0xFFFDEAD9),
-            child: const Center(
-              child: Icon(Icons.mic_rounded, size: 42, color: Color(0xFF111827)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    height: 1.35,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _Chip(text: category, bg: const Color(0xFFFFEDD5), fg: const Color(0xFF9A3412)),
-                    _Chip(text: level, bg: const Color(0xFFF3F4F6), fg: const Color(0xFF6B7280)),
-                    _Chip(text: "⏱ $minutes min", bg: const Color(0xFFF3F4F6), fg: const Color(0xFF6B7280)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 46,
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onStart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2F80ED),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      "Start Lesson",
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final String text;
-  final Color bg;
-  final Color fg;
-
-  const _Chip({required this.text, required this.bg, required this.fg});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          color: fg,
-        ),
-      ),
-    );
-  }
-}
-
-/* ---------------- QUICK PRACTICE GRID ---------------- */
-
-class _PracticeItem {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  _PracticeItem({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-}
-
-class _QuickPracticeGrid extends StatelessWidget {
-  final List<_PracticeItem> items;
-  const _QuickPracticeGrid({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      itemCount: items.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.15,
-      ),
-      itemBuilder: (context, i) {
-        final item = items[i];
-        return InkWell(
-          onTap: item.onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: item.color,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 8)),
-              ],
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(item.icon, size: 34, color: Colors.white),
-                  const SizedBox(height: 10),
-                  Text(
-                    item.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 /* ---------------- ACHIEVEMENTS ---------------- */
 
 class _AchievementsRow extends StatelessWidget {
@@ -739,6 +503,7 @@ class _SectionTitleWithAction extends StatelessWidget {
     required this.title,
     required this.actionText,
     required this.onTap,
+    super.key,
   });
 
   @override
@@ -770,6 +535,5 @@ class _SectionTitleWithAction extends StatelessWidget {
     );
   }
 }
-
 
 // Nedu's code
