@@ -25,7 +25,20 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "skill": "Listening",
       "difficulty": "Beginner",
       "duration": "20 min",
-      "progress": 0.0
+      "progress": 0.0,
+      "description": "Master essential vocabulary for dining out",
+
+      "learningPoints": [
+        "Understand common phrases",
+        "Recognize vocabulary in context",
+        "Improve listening skills"
+      ],
+
+      "outline": [
+        {"title": "Introduction", "time": "2 min"},
+        {"title": "Vocabulary", "time": "5 min"},
+        {"title": "Quick Quiz", "time": "3 min"},
+      ]
     },
     {
       "title": "Shopping Conversations",
@@ -102,11 +115,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 final lesson = filteredLessons[index];
 
                 return LessonCard(
-                  title: lesson["title"],
-                  skill: lesson["skill"],
-                  difficulty: lesson["difficulty"],
-                  duration: lesson["duration"],
-                  progress: lesson["progress"],
+                  lesson: lesson,
                 );
               },
             ),
@@ -125,7 +134,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (selected) const Icon(Icons.check, size: 16),
+            //if (selected) const Icon(Icons.check, size: 16),
             if (selected) const SizedBox(width: 4),
             Text(label),
           ],
@@ -149,7 +158,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (selected) const Icon(Icons.check, size: 16),
+            //if (selected) const Icon(Icons.check, size: 16),
             if (selected) const SizedBox(width: 4),
             Text(label),
           ],
