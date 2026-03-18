@@ -36,6 +36,19 @@ class _LessonsScreenState extends State<LessonsScreen> {
     },
   ];
 
+  /// FILTER LOGIC - This will return a new list of lessons based on the selected filters
+  List<Map<String, dynamic>> get filteredLessons {
+    return lessons.where((lesson) {
+      final matchesSkill =
+          selectedSkill == "All" || lesson["skill"] == selectedSkill;
+
+      final matchesDifficulty =
+          lesson["difficulty"] == selectedDifficulty;
+
+      return matchesSkill && matchesDifficulty;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +65,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
       body: Column(
         children: [
 
-          /// Skill Filter
+          /// Skill Filter - This will allow users to filter lessons by skill type (Listening, Speaking, etc.)
           SizedBox(
             height: 60,
             child: ListView(
@@ -69,7 +82,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
           const SizedBox(height: 10),
 
-          /// Difficulty Filter
+          /// Difficulty Filter - This will allow users to filter lessons by difficulty level (Beginner, Intermediate, Advanced)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -81,12 +94,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
           const SizedBox(height: 10),
 
-          /// Lesson List
+          /// USE FILTERED LIST HERE - This will display the lessons that match the selected filters
           Expanded(
             child: ListView.builder(
-              itemCount: lessons.length,
+              itemCount: filteredLessons.length,
               itemBuilder: (context, index) {
-                final lesson = lessons[index];
+                final lesson = filteredLessons[index];
 
                 return LessonCard(
                   title: lesson["title"],
@@ -109,7 +122,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Text(label),
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) const Icon(Icons.check, size: 16),
+            if (selected) const SizedBox(width: 4),
+            Text(label),
+          ],
+        ),
         selected: selected,
         onSelected: (_) {
           setState(() {
@@ -126,7 +146,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Text(label),
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) const Icon(Icons.check, size: 16),
+            if (selected) const SizedBox(width: 4),
+            Text(label),
+          ],
+        ),
         selected: selected,
         onSelected: (_) {
           setState(() {
