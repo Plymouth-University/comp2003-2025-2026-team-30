@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'lesson_section_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LessonDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> lesson;
 
   const LessonDetailsScreen({super.key, required this.lesson});
+
+  Future<int> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(lesson["title"]) ?? 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,13 +172,14 @@ class LessonDetailsScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final index = await loadProgress();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => LessonSectionScreen(
                           lesson: lesson,
-                          currentIndex: 0,
+                          currentIndex: index,
                         ),
                       ),
                     );

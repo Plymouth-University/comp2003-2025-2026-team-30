@@ -31,16 +31,19 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "outline": [
         {
           "title": "Introduction",
+          "type": "Audio",
           "time": "2 min",
           "description": "Get an overview of the lesson and what you will learn"
         },
         {
           "title": "Vocabulary",
+          "type": "Audio",
           "time": "5 min",
           "description": "Learn essential words and phrases with examples"
         },
         {
           "title": "Quick Quiz",
+          "type": "Quiz",
           "time": "3 min",
           "description": "Test your understanding with a short quiz"
         }
@@ -63,16 +66,19 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "outline": [
         {
           "title": "Common Questions",
+          "type": "Audio",
           "time": "10 min",
           "description": "Learn how to answer frequently asked interview questions"
         },
         {
           "title": "Role Play",
+          "type": "Audio",
           "time": "15 min",
           "description": "Practice with a simulated interview scenario"
         },
         {
           "title": "Feedback & Tips",
+          "type": "Audio",
           "time": "5 min",
           "description": "Get feedback on your performance and tips for improvement"
         }
@@ -95,16 +101,19 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "outline": [
         {
           "title": "Essential Phrases",
+          "type": "Audio",
           "time": "10 min",
           "description": "Learn important phrases for airports, hotels, and transportation"
         },
         {
           "title": "Pronunciation Practice",
+          "type": "Audio",
           "time": "10 min",
           "description": "Practice saying the phrases with correct pronunciation"
         },
         {
           "title": "Real-Life Scenarios",
+          "type": "Audio",
           "time": "5 min",
           "description": "Apply what you've learned in simulated travel situations"
         }
