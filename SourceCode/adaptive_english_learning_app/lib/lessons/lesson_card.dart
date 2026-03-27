@@ -9,8 +9,32 @@ class LessonCard extends StatelessWidget {
     required this.lesson,
   });
 
+  static final Map<String, Map<String, dynamic>> skillThemes = {
+    "Listening": {
+      "color": Colors.green,
+      "icon": Icons.headphones,
+    },
+    "Speaking": {
+      "color": Colors.orange,
+      "icon": Icons.mic,
+    },
+    "Reading": {
+      "color": Colors.blue,
+      "icon": Icons.menu_book,
+    },
+    "Writing": {
+      "color": Colors.purple,
+      "icon": Icons.edit,
+    },
+  };
+
   @override
   Widget build(BuildContext context) {
+    final theme = skillThemes[lesson["skill"]] ??
+        {"color": Colors.grey, "icon": Icons.school};
+
+    final color = theme["color"];
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -20,98 +44,96 @@ class LessonCard extends StatelessWidget {
           ),
         );
       },
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
+        child: Row(
+          children: [
 
-              /// Icon Box (dynamic later if needed) - This will show an icon representing the lesson type (e.g., listening, speaking)
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getIcon(lesson["skill"]),
-                  size: 30,
-                ),
+            /// ICON BOX (now themed)
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: Icon(
+                theme["icon"],
+                size: 30,
+                color: color,
+              ),
+            ),
 
-              const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-              /// Text Content - This will show the lesson title, skill type, difficulty, duration, and a progress bar
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            /// TEXT CONTENT
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
 
-                    Text(
-                      lesson["title"],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  /// TITLE
+                  Text(
+                    lesson["title"],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  /// META INFO (cleaner than chips)
+                  Row(
+                    children: [
+                      Text(
+                        lesson["difficulty"],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-
-                        Chip(
-                          label: Text(lesson["skill"]),
-                          backgroundColor: Colors.orange.shade100,
+                      const SizedBox(width: 10),
+                      Text(
+                        lesson["duration"],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
                         ),
+                      ),
+                    ],
+                  ),
 
-                        Chip(
-                          label: Text(lesson["difficulty"]),
-                          backgroundColor: Colors.grey.shade200,
-                        ),
+                  const SizedBox(height: 10),
 
-                        Chip(
-                          label: Text(lesson["duration"]),
-                          backgroundColor: Colors.grey.shade200,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    LinearProgressIndicator(
+                  /// PROGRESS BAR
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
                       value: lesson["progress"] ?? 0.0,
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
+                      minHeight: 6,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: AlwaysStoppedAnimation(color),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );
-  }
-
-  /// Dynamic icon based on lesson type - This is just a simple example, you can expand it with more types and icons as needed
-  IconData _getIcon(String skill) {
-    switch (skill) {
-      case "Listening":
-        return Icons.headphones;
-      case "Speaking":
-        return Icons.mic;
-      case "Reading":
-        return Icons.menu_book;
-      case "Writing":
-        return Icons.edit;
-      default:
-        return Icons.school;
-    }
   }
 }

@@ -133,12 +133,33 @@ class _LessonsScreenState extends State<LessonsScreen> {
       return matchesSkill && matchesDifficulty;
     }).toList();
   }
+  final Map<String, Map<String, dynamic>> skillThemes = {
+    "Listening": {
+      "color": Colors.green,
+      "icon": Icons.headphones,
+    },
+    "Speaking": {
+      "color": Colors.orange,
+      "icon": Icons.mic,
+    },
+    "Reading": {
+      "color": Colors.blue,
+      "icon": Icons.menu_book,
+    },
+    "Writing": {
+      "color": Colors.purple,
+      "icon": Icons.edit,
+    },
+  };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Lessons"),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 15),
@@ -200,18 +221,25 @@ class _LessonsScreenState extends State<LessonsScreen> {
   Widget skillChip(String label) {
     final selected = selectedSkill == label;
 
+    final theme = skillThemes[label];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            //if (selected) const Icon(Icons.check, size: 16),
-            if (selected) const SizedBox(width: 4),
-            Text(label),
-          ],
-        ),
+        avatar: label != "All"
+            ? Icon(
+                theme?["icon"] ?? Icons.school,
+                size: 18,
+                color: selected ? Colors.white : theme?["color"],
+              )
+            : null,
+        label: Text(label),
         selected: selected,
+        selectedColor: theme?["color"] ?? Colors.grey,
+        backgroundColor: Colors.grey[200],
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Colors.black,
+        ),
         onSelected: (_) {
           setState(() {
             selectedSkill = label;
@@ -227,15 +255,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            //if (selected) const Icon(Icons.check, size: 16),
-            if (selected) const SizedBox(width: 4),
-            Text(label),
-          ],
-        ),
+        label: Text(label),
         selected: selected,
+        selectedColor: Colors.black,
+        backgroundColor: Colors.grey[200],
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Colors.black,
+        ),
         onSelected: (_) {
           setState(() {
             selectedDifficulty = label;

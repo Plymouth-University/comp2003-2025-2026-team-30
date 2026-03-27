@@ -20,10 +20,12 @@ class LessonDetailsScreen extends StatelessWidget {
     final List<Map<String, dynamic>> outline =
         lesson["outline"] ?? [];
 
+    final color = _getColor(lesson["skill"]);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Lesson Details"),
-        leading: const BackButton(),
+        elevation: 0,
       ),
 
       body: SingleChildScrollView(
@@ -31,24 +33,51 @@ class LessonDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// Top Banner - This can be an image or an icon representing the lesson type (e.g., listening, speaking)
+            /// TOP BANNER - This will show a large icon and the skill type (e.g., Listening, Speaking) with a background color representing the skill
             Container(
-              height: 150,
+              height: 180,
               width: double.infinity,
-              color: _getColor(lesson["skill"]),
-              child: Icon(
-                _getIcon(lesson["skill"]),
-                size: 60,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    color,
+                    color.withOpacity(0.7),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _getIcon(lesson["skill"]),
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      lesson["skill"],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            /// Lesson Info Card - This will show the lesson title, skill type, difficulty, duration, and a brief description
+            /// LESSON INFO - This will show the lesson title, description, and key info (difficulty, duration) in a card format
             Padding(
               padding: const EdgeInsets.all(16),
               child: Card(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 3,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -68,9 +97,9 @@ class LessonDetailsScreen extends StatelessWidget {
                       Wrap(
                         spacing: 8,
                         children: [
-                          Chip(label: Text(lesson["skill"])),
-                          Chip(label: Text(lesson["difficulty"])),
-                          Chip(label: Text(lesson["duration"])),
+                          _buildInfoChip(lesson["skill"]),
+                          _buildInfoChip(lesson["difficulty"]),
+                          _buildInfoChip(lesson["duration"]),
                         ],
                       ),
 
@@ -87,7 +116,7 @@ class LessonDetailsScreen extends StatelessWidget {
               ),
             ),
 
-            /// What You'll Learn - This will list the key learning points of the lesson in a checklist format
+            /// WHAT YOU’LL LEARN - This will show a list of key learning points or outcomes for the lesson, giving users a clear idea of what they will achieve by completing it
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -105,18 +134,24 @@ class LessonDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: learningPoints.map((point) {
-                  return ListTile(
-                    leading: const Icon(Icons.check_circle,
-                        color: Colors.green),
-                    title: Text(point),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.green),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(point)),
+                      ],
+                    ),
                   );
                 }).toList(),
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
-            ///   Lesson Outline - This will show the structure of the lesson, such as different sections or activities, in an expandable list format
+            /// LESSON OUTLINE - This will show an expandable list of the lesson sections or modules, allowing users to see the structure of the lesson and what each section will cover before they start
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -130,33 +165,35 @@ class LessonDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            /// DROPDOWN FOR LESSON OUTLINE - This will allow users to expand each section to see more details about the activities or content covered in that part of the lesson
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ExpansionPanelList.radio(
                 elevation: 0,
-                dividerColor: Colors.grey[300],
                 children: outline.map((section) {
                   return ExpansionPanelRadio(
-                    value: section["title"]!, // ✅ FIX
+                    value: section["title"],
 
                     headerBuilder: (context, isExpanded) {
                       return ListTile(
-                        leading: const Icon(Icons.menu_book),
+                        leading: Icon(
+                          _getIcon(lesson["skill"]),
+                          color: color,
+                        ),
                         title: Text(section["title"] ?? ""),
                         subtitle: Text(section["time"] ?? ""),
                       );
                     },
 
-                    /// DESCRIPTION DROPDOWN - This will show a more detailed description of what is covered in each section of the lesson when expanded
                     body: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
-                      color: Colors.grey[100],
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Text(
                         section["description"] ??
                             "No description available",
-                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   );
@@ -164,14 +201,21 @@ class LessonDetailsScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            /// Start Button - This will allow users to start the lesson, which can navigate to a new screen or trigger the lesson content to load
+            /// START BUTTON - This will allow users to start the lesson, taking them to the first section of the lesson outline. It will also save their progress so they can resume later if needed
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onPressed: () async {
                     final index = await loadProgress();
                     Navigator.push(
@@ -184,7 +228,13 @@ class LessonDetailsScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text("Start Lesson"),
+                  child: const Text(
+                    "Start Lesson",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -193,6 +243,24 @@ class LessonDetailsScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// INFO CHIP - This is a reusable widget for displaying key information about the lesson (e.g., skill type, difficulty, duration) in a compact and visually appealing way
+  Widget _buildInfoChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12),
+      ),
+    );
+  }
+
+  /// ICON MAPPING - This is a helper function to return an appropriate icon based on the skill type of the lesson, adding a visual element that helps users quickly identify the lesson type
   IconData _getIcon(String skill) {
     switch (skill) {
       case "Listening":
@@ -208,18 +276,20 @@ class LessonDetailsScreen extends StatelessWidget {
     }
   }
 
+  /// COLOR MAPPING - This is a helper function to return a specific color based on the skill type of the lesson, which is used in the top banner and icons to create a cohesive visual theme for each lesson type
   Color _getColor(String skill) {
     switch (skill) {
       case "Listening":
-        return Colors.blue.shade100;
+        return Colors.green;
       case "Speaking":
-        return Colors.green.shade100;
+        return Colors.orange;
       case "Reading":
-        return Colors.orange.shade100;
+        return Colors.blue;
       case "Writing":
-        return Colors.purple.shade100;
+        return Colors.purple;
       default:
-        return Colors.grey.shade200;
+        return Colors.grey;
     }
   }
 }
+
