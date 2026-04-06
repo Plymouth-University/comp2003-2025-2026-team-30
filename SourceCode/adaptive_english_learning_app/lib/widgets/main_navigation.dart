@@ -15,25 +15,30 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    LessonsScreen(),
-    PracticeScreen(),
-    ProgressScreen(),
-    ProfileScreen(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  void _goToLessonsTab() {
+    setState(() {
+      _selectedIndex = 1; // ✅ Lessons tab index
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex],
+    final pages = [
+      HomeScreen(onGoToLessons: _goToLessonsTab), // ✅ updated
+      const LessonsScreen(),
+      const PracticeScreen(),
+      const ProgressScreen(),
+      const ProfileScreen(),
+    ];
 
+    return Scaffold(
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -41,7 +46,6 @@ class _MainNavigationState extends State<MainNavigation> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
-
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
