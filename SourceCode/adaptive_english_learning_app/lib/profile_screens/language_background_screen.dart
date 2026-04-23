@@ -57,7 +57,7 @@ class _LanguageBackgroundScreenState
                 labelText: "Select your native language",
                 border: OutlineInputBorder(),
               ),
-              value: nativeLanguage,
+              initialValue: nativeLanguage,
               items: languages
                   .map((lang) => DropdownMenuItem(
                         value: lang,

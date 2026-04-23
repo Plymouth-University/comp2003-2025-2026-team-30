@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/user_profile_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final UserProfileService _userProfileService = UserProfileService();
 
   // ======================
   // LOGIN
@@ -34,10 +34,10 @@ class AuthService {
     final user = result.user;
 
     if (user != null) {
-      await _firestore.collection('users').doc(user.uid).set({
-        'email': email,
-        'createdAt': Timestamp.now(),
-      });
+      await _userProfileService.createInitialProfile(
+        user: user,
+        email: email,
+      );
     }
 
     return user;

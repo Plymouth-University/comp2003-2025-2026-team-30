@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../services/learning_firestore_service.dart';
 
 class LessonSectionScreen extends StatelessWidget {
   final Map<String, dynamic> lesson;
   final int currentIndex;
 
-  const LessonSectionScreen({
+  final LearningFirestoreService _learningService = LearningFirestoreService();
+
+  LessonSectionScreen({
     super.key,
     required this.lesson,
     required this.currentIndex,
@@ -20,34 +24,36 @@ class LessonSectionScreen extends StatelessWidget {
   };
 
   Future<void> saveProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(
-      lesson["title"],
-      currentIndex,
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    final outline = (lesson["outline"] as List?) ?? const [];
+    await _learningService.recordLessonSectionCompletion(
+      uid: user.uid,
+      lesson: lesson,
+      sectionIndex: currentIndex,
+      totalSections: outline.length,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> outline =
-        lesson["outline"] ?? [];
+    final List<Map<String, dynamic>> outline = lesson["outline"] ?? [];
 
     final section = outline[currentIndex];
     final color = skillColors[lesson["skill"]] ?? Colors.grey;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(section["title"]),
-        backgroundColor: color,
-      ),
+      appBar: AppBar(title: Text(section["title"]), backgroundColor: color),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// PROGRESS 
+            /// PROGRESS
             LinearProgressIndicator(
               value: (currentIndex + 1) / outline.length,
               color: color,
@@ -63,20 +69,17 @@ class LessonSectionScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            /// TITLE 
+            /// TITLE
             Text(
               section["title"],
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 10),
 
-            /// CONTENT (SCROLLABLE FIX) 
+            /// CONTENT (SCROLLABLE FIX)
             Expanded(
-              child: SingleChildScrollView(
-                child: buildSectionContent(section),
-              ),
+              child: SingleChildScrollView(child: buildSectionContent(section)),
             ),
 
             const SizedBox(height: 10),
@@ -85,7 +88,6 @@ class LessonSectionScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-
                 /// PREVIOUS
                 if (currentIndex > 0)
                   ElevatedButton(
@@ -107,11 +109,12 @@ class LessonSectionScreen extends StatelessWidget {
 
                 /// NEXT / FINISH
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: color),
                   onPressed: () async {
                     await saveProgress();
+                    if (!context.mounted) {
+                      return;
+                    }
                     if (currentIndex < outline.length - 1) {
                       Navigator.pushReplacement(
                         context,
@@ -127,13 +130,11 @@ class LessonSectionScreen extends StatelessWidget {
                     }
                   },
                   child: Text(
-                    currentIndex < outline.length - 1
-                        ? "Next"
-                        : "Finish",
+                    currentIndex < outline.length - 1 ? "Next" : "Finish",
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -180,7 +181,7 @@ class LessonSectionScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -192,9 +193,7 @@ class LessonSectionScreen extends StatelessWidget {
                 onPressed: () {},
                 icon: const Icon(Icons.play_arrow),
                 label: const Text("Play Audio"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: color),
               ),
             ],
           ),
@@ -233,12 +232,11 @@ class LessonSectionScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            section["description"] ??
-                "Say the sentence clearly",
+            section["description"] ?? "Say the sentence clearly",
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
@@ -247,10 +245,7 @@ class LessonSectionScreen extends StatelessWidget {
         const SizedBox(height: 30),
 
         Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           padding: const EdgeInsets.all(30),
           child: const Icon(Icons.mic, size: 40, color: Colors.white),
         ),
@@ -262,7 +257,7 @@ class LessonSectionScreen extends StatelessWidget {
     );
   }
 
-  /// READING UI 
+  /// READING UI
   Widget buildReading(Map<String, dynamic> section) {
     final color = skillColors["Reading"]!;
 
@@ -280,7 +275,7 @@ class LessonSectionScreen extends StatelessWidget {
           height: 180,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: SingleChildScrollView(
@@ -306,8 +301,6 @@ class LessonSectionScreen extends StatelessWidget {
 
   /// WRITING UI
   Widget buildWriting(Map<String, dynamic> section) {
-    final color = skillColors["Writing"]!;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

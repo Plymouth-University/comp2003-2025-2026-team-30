@@ -1,48 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../services/learning_firestore_service.dart';
 import 'lesson_section_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LessonDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> lesson;
 
-  const LessonDetailsScreen({super.key, required this.lesson});
+  final LearningFirestoreService _learningService = LearningFirestoreService();
+
+  LessonDetailsScreen({super.key, required this.lesson});
 
   Future<int> loadProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(lesson["title"]) ?? 0;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return 0;
+    }
+
+    final snapshot = await _learningService
+        .watchLessonProgress(user.uid, _learningService.lessonDocIdFor(lesson))
+        .first;
+
+    final data = snapshot.data();
+    final resumeIndex = (data?['resumeSectionIndex'] as num?)?.toInt() ?? 0;
+    final outline = (lesson['outline'] as List?) ?? const [];
+
+    if (resumeIndex >= outline.length) {
+      return 0;
+    }
+
+    return resumeIndex;
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<String> learningPoints =
-        lesson["learningPoints"] ?? [];
+    final List<String> learningPoints = lesson["learningPoints"] ?? [];
 
-    final List<Map<String, dynamic>> outline =
-        lesson["outline"] ?? [];
+    final List<Map<String, dynamic>> outline = lesson["outline"] ?? [];
 
     final color = _getColor(lesson["skill"]);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Lesson Details"),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text("Lesson Details"), elevation: 0),
 
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// TOP BANNER - This will show a large icon and the skill type (e.g., Listening, Speaking) with a background color representing the skill
             Container(
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    color,
-                    color.withOpacity(0.7),
-                  ],
+                  colors: [color, color.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -83,7 +94,6 @@ class LessonDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       Text(
                         lesson["title"],
                         style: const TextStyle(
@@ -106,8 +116,7 @@ class LessonDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 10),
 
                       Text(
-                        lesson["description"] ??
-                            "No description available",
+                        lesson["description"] ?? "No description available",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -121,10 +130,7 @@ class LessonDetailsScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 "What You'll Learn",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -138,8 +144,7 @@ class LessonDetailsScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle,
-                            color: Colors.green),
+                        const Icon(Icons.check_circle, color: Colors.green),
                         const SizedBox(width: 10),
                         Expanded(child: Text(point)),
                       ],
@@ -156,10 +161,7 @@ class LessonDetailsScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 "Lesson Outline",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -175,10 +177,7 @@ class LessonDetailsScreen extends StatelessWidget {
 
                     headerBuilder: (context, isExpanded) {
                       return ListTile(
-                        leading: Icon(
-                          _getIcon(lesson["skill"]),
-                          color: color,
-                        ),
+                        leading: Icon(_getIcon(lesson["skill"]), color: color),
                         title: Text(section["title"] ?? ""),
                         subtitle: Text(section["time"] ?? ""),
                       );
@@ -192,8 +191,7 @@ class LessonDetailsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        section["description"] ??
-                            "No description available",
+                        section["description"] ?? "No description available",
                       ),
                     ),
                   );
@@ -218,6 +216,9 @@ class LessonDetailsScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     final index = await loadProgress();
+                    if (!context.mounted) {
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -230,10 +231,7 @@ class LessonDetailsScreen extends StatelessWidget {
                   },
                   child: const Text(
                     "Start Lesson",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -247,16 +245,12 @@ class LessonDetailsScreen extends StatelessWidget {
   /// INFO CHIP - This is a reusable widget for displaying key information about the lesson (e.g., skill type, difficulty, duration) in a compact and visually appealing way
   Widget _buildInfoChip(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12),
-      ),
+      child: Text(text, style: const TextStyle(fontSize: 12)),
     );
   }
 
@@ -292,4 +286,3 @@ class LessonDetailsScreen extends StatelessWidget {
     }
   }
 }
-
