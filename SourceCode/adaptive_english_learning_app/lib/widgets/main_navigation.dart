@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../home/home_screen.dart';
 import '../lessons/lessons_screen.dart';
 import '../practice/practice_screen.dart';
@@ -14,14 +15,19 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  late final List<Widget> _pages;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    LessonsScreen(),
-    PracticeScreen(),
-    ProgressScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomeScreen(onGoToLessons: _goToLessonsTab),
+      const LessonsScreen(),
+      const PracticeScreen(),
+      ProgressScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -29,11 +35,16 @@ class _MainNavigationState extends State<MainNavigation> {
     });
   }
 
+  void _goToLessonsTab() {
+    setState(() {
+      _selectedIndex = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedIndex],
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -41,32 +52,31 @@ class _MainNavigationState extends State<MainNavigation> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
-
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: "Home",
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu_book_outlined),
             activeIcon: Icon(Icons.menu_book),
-            label: "Lessons",
+            label: 'Lessons',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center_outlined),
             activeIcon: Icon(Icons.fitness_center),
-            label: "Practice",
+            label: 'Practice',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.show_chart_outlined),
             activeIcon: Icon(Icons.show_chart),
-            label: "Progress",
+            label: 'Progress',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: "Profile",
+            label: 'Profile',
           ),
         ],
       ),
