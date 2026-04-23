@@ -125,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ======================
-// DASHBOARDS (PLACEHOLDER)
+// DASHBOARDS (PLACEHOLDER) not in use anymore
 // ======================
 
 class HomeDashboard extends StatelessWidget {
