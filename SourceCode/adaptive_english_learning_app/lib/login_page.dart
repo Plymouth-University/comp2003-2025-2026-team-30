@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_service.dart';
 import 'signup_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
-import 'package:adaptive_english_learning_app/widgets/main_navigation.dart';
+import 'package:adaptive_english_learning_app/widgets/app_gate.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,31 +21,44 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   Future<void> _login() async {
-  setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  try {
-    final user = await _authService.signIn(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-
-    if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MainNavigation(),
-        ),
+    try {
+      final user = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Login failed. Please check your credentials.")),
-    );
-  } finally {
-    setState(() => _isLoading = false);
-  }
-}
 
+      if (!mounted) {
+        return;
+      }
+
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AppGate()),
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Login failed: ${error.code}")));
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed. Please check your credentials.")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                     onSignUpTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const SignUpPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const SignUpPage()),
                       );
                     },
                   ),
@@ -77,10 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 30),
                   const Text(
                     "Welcome Back",
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
 
@@ -104,10 +113,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : primaryButton(
-                          "Sign In",
-                          onPressed: _login,
-                        ),
+                      : primaryButton("Sign In", onPressed: _login),
                 ],
               ),
             ),
@@ -119,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ======================
-// DASHBOARDS (PLACEHOLDER)
+// DASHBOARDS (PLACEHOLDER) not in use anymore
 // ======================
 
 class HomeDashboard extends StatelessWidget {
@@ -137,4 +143,3 @@ class HomeDashboard extends StatelessWidget {
     );
   }
 }
-

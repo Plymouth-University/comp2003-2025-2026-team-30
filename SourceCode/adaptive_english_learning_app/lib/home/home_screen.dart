@@ -1,64 +1,87 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../services/user_profile_service.dart';
 
 class HomeScreen extends StatelessWidget {
   final VoidCallback onGoToLessons;
+  final UserProfileService _userProfileService = UserProfileService();
 
-  const HomeScreen({
-    super.key,
-    required this.onGoToLessons,
-  });
+  HomeScreen({super.key, required this.onGoToLessons});
 
   @override
   Widget build(BuildContext context) {
-    const bg = Color(0xFFF6F7FB);
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please sign in to continue learning.')),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TopHeader(
-                name: "User",
-                streakDays: 7,
-                greeting: "Good Day",
-              ),
-              const SizedBox(height: 16),
+        child: StreamBuilder(
+          stream: _userProfileService.watchUserProfile(user.uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              _DailyGoalCard(
-                done: 3,
-                total: 5,
-                onContinue: onGoToLessons, // ✅ Switch tab instead of pushing route
-              ),
-              const SizedBox(height: 18),
+            final data = snapshot.data?.data() ?? <String, dynamic>{};
+            final displayName =
+                (data['displayName'] as String?)?.trim().isNotEmpty == true
+                ? data['displayName'] as String
+                : (user.email?.split('@').first ?? 'Learner');
+            final streakDays = (data['streakDays'] as num?)?.toInt() ?? 0;
+            final lessons =
+                (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
+            final totalMinutes =
+                (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+            final hours = totalMinutes / 60.0;
+            final dailyTarget = 5;
+            final completedToday = totalMinutes > 0
+                ? (totalMinutes / 5).clamp(0, dailyTarget).toInt()
+                : 0;
 
-              _SectionTitleWithAction(
-                title: "Your Achievements",
-                actionText: "View All",
-                onTap: () {},
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TopHeader(
+                    greeting: 'Good Day',
+                    name: displayName,
+                    streakDays: streakDays,
+                  ),
+                  const SizedBox(height: 16),
+                  _DailyGoalCard(
+                    done: completedToday,
+                    total: dailyTarget,
+                    onContinue: onGoToLessons,
+                  ),
+                  const SizedBox(height: 18),
+                  const _SectionTitle(title: 'Your Progress'),
+                  const SizedBox(height: 10),
+                  _ProgressStatsRow(
+                    lessons: lessons,
+                    hours: hours,
+                    days: streakDays,
+                  ),
+                  const SizedBox(height: 18),
+                  const _SectionTitle(title: 'Achievements'),
+                  const SizedBox(height: 10),
+                  const _AchievementsRow(),
+                ],
               ),
-              const SizedBox(height: 10),
-              const _AchievementsRow(),
-              const SizedBox(height: 18),
-
-              const _SectionTitle(title: "Your Progress"),
-              const SizedBox(height: 10),
-              const _ProgressStatsRow(
-                lessons: 42,
-                hours: 12.5,
-                days: 7,
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
-
-/* ---------------- TOP HEADER ---------------- */
 
 class _TopHeader extends StatelessWidget {
   final String greeting;
@@ -85,8 +108,8 @@ class _TopHeader extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
               children: [
-                TextSpan(text: "$greeting,\n"),
-                TextSpan(text: "$name! "),
+                TextSpan(text: '$greeting\n'),
+                TextSpan(text: '$name! '),
                 const WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
                   child: Padding(
@@ -103,21 +126,6 @@ class _TopHeader extends StatelessWidget {
           ),
         ),
         _StreakPill(days: streakDays),
-        const SizedBox(width: 10),
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {},
-          child: Container(
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: const Icon(Icons.settings_rounded, color: Color(0xFF111827)),
-          ),
-        ),
       ],
     );
   }
@@ -125,6 +133,7 @@ class _TopHeader extends StatelessWidget {
 
 class _StreakPill extends StatelessWidget {
   final int days;
+
   const _StreakPill({required this.days});
 
   @override
@@ -139,11 +148,14 @@ class _StreakPill extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_fire_department_rounded,
-              size: 18, color: Color(0xFFF97316)),
+          const Icon(
+            Icons.local_fire_department_rounded,
+            size: 18,
+            color: Color(0xFFF97316),
+          ),
           const SizedBox(width: 6),
           Text(
-            "$days days",
+            '$days days',
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               color: Color(0xFF9A3412),
@@ -154,8 +166,6 @@ class _StreakPill extends StatelessWidget {
     );
   }
 }
-
-/* ---------------- DAILY GOAL CARD ---------------- */
 
 class _DailyGoalCard extends StatelessWidget {
   final int done;
@@ -178,226 +188,77 @@ class _DailyGoalCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Daily Goal",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _ProgressRing(progress: progress, done: done, total: total),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "You're doing great!",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Complete ${total - done} more\nlessons to reach\nyour daily goal.",
-                      style: const TextStyle(
-                        height: 1.35,
-                        fontSize: 13.5,
-                        color: Color(0xFF6B7280),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 44,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: onContinue,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2F80ED),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Continue\nLearning",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            height: 1.05,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressRing extends StatelessWidget {
-  final double progress;
-  final int done;
-  final int total;
-
-  const _ProgressRing({
-    required this.progress,
-    required this.done,
-    required this.total,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 92,
-      width: 92,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            height: 92,
-            width: 92,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 9,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF2F80ED)),
-              strokeCap: StrokeCap.round,
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "$done/$total",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const Text(
-                "lessons",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/* ---------------- ACHIEVEMENTS ---------------- */
-
-class _AchievementsRow extends StatelessWidget {
-  const _AchievementsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      _Achievement(icon: Icons.school_rounded, label: "First\nLesson", color: const Color(0xFF2F80ED)),
-      _Achievement(icon: Icons.local_fire_department_rounded, label: "7 Day\nStreak", color: const Color(0xFFF97316)),
-      _Achievement(icon: Icons.star_rounded, label: "10 Lessons", color: const Color(0xFFFACC15)),
-      _Achievement(icon: Icons.mic_rounded, label: "Speaking\nStar", color: const Color(0xFFF59E0B)),
-      _Achievement(icon: Icons.lock_rounded, label: "50\nLessons", color: const Color(0xFFE5E7EB), locked: true),
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          for (final a in items) ...[
-            _AchievementPill(achievement: a),
-            const SizedBox(width: 14),
-          ],
+          SizedBox(
+            height: 84,
+            width: 84,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 8,
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF2F80ED)),
+                ),
+                Text(
+                  '$done/$total',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "You're doing great!",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Complete ${total - done} more lessons to reach your daily goal.',
+                  style: const TextStyle(
+                    height: 1.35,
+                    fontSize: 13.5,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2F80ED),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Continue Learning'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
-class _Achievement {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool locked;
-
-  _Achievement({
-    required this.icon,
-    required this.label,
-    required this.color,
-    this.locked = false,
-  });
-}
-
-class _AchievementPill extends StatelessWidget {
-  final _Achievement achievement;
-  const _AchievementPill({required this.achievement});
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = achievement.locked ? const Color(0xFFF3F4F6) : achievement.color;
-
-    return Column(
-      children: [
-        Container(
-          height: 56,
-          width: 56,
-          decoration: BoxDecoration(
-            color: bg,
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Icon(
-            achievement.icon,
-            color: achievement.locked ? const Color(0xFF9CA3AF) : Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          achievement.label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF6B7280),
-            height: 1.15,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/* ---------------- PROGRESS STATS ---------------- */
 
 class _ProgressStatsRow extends StatelessWidget {
   final int lessons;
@@ -414,11 +275,29 @@ class _ProgressStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _StatCard(icon: Icons.collections_bookmark_rounded, value: "$lessons", label: "Lessons")),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.collections_bookmark_rounded,
+            value: '$lessons',
+            label: 'Lessons',
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(icon: Icons.timer_rounded, value: "$hours", label: "Hours")),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.timer_rounded,
+            value: hours.toStringAsFixed(1),
+            label: 'Hours',
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(icon: Icons.local_fire_department_rounded, value: "$days", label: "Days")),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.local_fire_department_rounded,
+            value: '$days',
+            label: 'Days',
+          ),
+        ),
       ],
     );
   }
@@ -443,9 +322,6 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 14, offset: Offset(0, 8)),
-        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -475,10 +351,91 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-/* ---------------- SECTION TITLES ---------------- */
+class _AchievementsRow extends StatelessWidget {
+  const _AchievementsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final achievements = [
+      _Achievement(
+        icon: Icons.school_rounded,
+        label: 'First Lesson',
+        color: const Color(0xFF2F80ED),
+      ),
+      _Achievement(
+        icon: Icons.local_fire_department_rounded,
+        label: '7 Day Streak',
+        color: const Color(0xFFF97316),
+      ),
+      _Achievement(
+        icon: Icons.star_rounded,
+        label: '10 Lessons',
+        color: const Color(0xFFFACC15),
+      ),
+      _Achievement(
+        icon: Icons.mic_rounded,
+        label: 'Speaking Star',
+        color: const Color(0xFFF59E0B),
+      ),
+    ];
+
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: achievements.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) =>
+            _AchievementPill(achievement: achievements[index]),
+      ),
+    );
+  }
+}
+
+class _Achievement {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  _Achievement({required this.icon, required this.label, required this.color});
+}
+
+class _AchievementPill extends StatelessWidget {
+  final _Achievement achievement;
+
+  const _AchievementPill({required this.achievement});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 56,
+          width: 56,
+          decoration: BoxDecoration(
+            color: achievement.color,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(achievement.icon, color: Colors.white),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          achievement.label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _SectionTitle extends StatelessWidget {
   final String title;
+
   const _SectionTitle({required this.title});
 
   @override
@@ -493,47 +450,3 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
-class _SectionTitleWithAction extends StatelessWidget {
-  final String title;
-  final String actionText;
-  final VoidCallback onTap;
-
-  const _SectionTitleWithAction({
-    required this.title,
-    required this.actionText,
-    required this.onTap,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-        ),
-        InkWell(
-          onTap: onTap,
-          child: Text(
-            actionText,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF2F80ED),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Nedu's code
