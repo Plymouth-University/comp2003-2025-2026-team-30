@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
             final data = snapshot.data?.data() ?? <String, dynamic>{};
 
             final displayName =
-                ((data['displayName'] as String?)?.trim().isNotEmpty == true)
+                (data['displayName'] as String?)?.trim().isNotEmpty == true
                     ? data['displayName'] as String
                     : (user.email?.split('@').first ?? 'Learner');
 
@@ -44,9 +44,11 @@ class HomeScreen extends StatelessWidget {
             final totalMinutes =
                 (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
 
+            final achievements =
+                data['achievements'] as Map<String, dynamic>? ?? {};
+
             final hours = totalMinutes / 60.0;
             const dailyTarget = 5;
-
             final completedToday = lessons.clamp(0, dailyTarget).toInt();
 
             return SingleChildScrollView(
@@ -76,7 +78,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   const _SectionTitle(title: 'Achievements'),
                   const SizedBox(height: 10),
-                  const _AchievementsRow(),
+                  _AchievementsRow(achievements: achievements),
                 ],
               ),
             );
@@ -129,47 +131,13 @@ class _TopHeader extends StatelessWidget {
             ),
           ),
         ),
-        _StreakPill(days: streakDays),
+    
       ],
     );
   }
 }
 
-class _StreakPill extends StatelessWidget {
-  final int days;
 
-  const _StreakPill({required this.days});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEDD5),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.local_fire_department_rounded,
-            size: 18,
-            color: Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            '$days days',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF9A3412),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _DailyGoalCard extends StatelessWidget {
   final int done;
@@ -356,30 +324,36 @@ class _StatCard extends StatelessWidget {
 }
 
 class _AchievementsRow extends StatelessWidget {
-  const _AchievementsRow();
+  final Map<String, dynamic> achievements;
+
+  const _AchievementsRow({required this.achievements});
 
   @override
   Widget build(BuildContext context) {
-    final achievements = [
+    final achievementsList = [
       _Achievement(
         icon: Icons.school_rounded,
         label: 'First Lesson',
         color: const Color(0xFF2F80ED),
+        unlocked: achievements['firstLesson'] == true,
       ),
       _Achievement(
         icon: Icons.local_fire_department_rounded,
         label: '7 Day Streak',
         color: const Color(0xFFF97316),
+        unlocked: achievements['sevenDayStreak'] == true,
       ),
       _Achievement(
         icon: Icons.star_rounded,
         label: '10 Lessons',
         color: const Color(0xFFFACC15),
+        unlocked: achievements['tenLessons'] == true,
       ),
       _Achievement(
         icon: Icons.mic_rounded,
         label: 'Speaking Star',
         color: const Color(0xFFF59E0B),
+        unlocked: achievements['speakingStar'] == true,
       ),
     ];
 
@@ -387,10 +361,10 @@ class _AchievementsRow extends StatelessWidget {
       height: 90,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: achievements.length,
+        itemCount: achievementsList.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) =>
-            _AchievementPill(achievement: achievements[index]),
+            _AchievementPill(achievement: achievementsList[index]),
       ),
     );
   }
@@ -400,8 +374,14 @@ class _Achievement {
   final IconData icon;
   final String label;
   final Color color;
+  final bool unlocked;
 
-  _Achievement({required this.icon, required this.label, required this.color});
+  _Achievement({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.unlocked,
+  });
 }
 
 class _AchievementPill extends StatelessWidget {
@@ -411,25 +391,34 @@ class _AchievementPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final circleColor =
+        achievement.unlocked ? achievement.color : const Color(0xFFD1D5DB);
+
+    final iconColor =
+        achievement.unlocked ? Colors.white : const Color(0xFF6B7280);
+
+    final textColor =
+        achievement.unlocked ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF);
+
     return Column(
       children: [
         Container(
           height: 56,
           width: 56,
           decoration: BoxDecoration(
-            color: achievement.color,
+            color: circleColor,
             shape: BoxShape.circle,
           ),
-          child: Icon(achievement.icon, color: Colors.white),
+          child: Icon(achievement.icon, color: iconColor),
         ),
         const SizedBox(height: 6),
         Text(
           achievement.label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF6B7280),
+            color: textColor,
           ),
         ),
       ],
