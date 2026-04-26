@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'ai_text_practice_screen.dart';
+import 'pronunciation_practice_screen.dart';
+
 class PracticeScreen extends StatelessWidget {
   const PracticeScreen({super.key});
 
@@ -84,37 +87,109 @@ class PracticeScreen extends StatelessWidget {
                     title: 'Pronunciation Practice',
                     emoji: '🎤',
                     color: const Color(0xFFE97B3A),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PronunciationPracticeScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _ActivityCard(
                     title: 'Vocabulary Builder',
                     emoji: '📚',
                     color: const Color(0xFF52B788),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AiTextPracticeScreen(
+                            activityType: 'vocabulary_builder',
+                            title: 'Vocabulary Builder',
+                            prompt:
+                                'Write 5 useful sentences using the words: curious, improve, practice, fluent, and target.',
+                            hint: 'Type your five sentences here.',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ActivityCard(
                     title: 'Grammar Tips',
                     emoji: '💡',
                     color: const Color(0xFF3B82F6),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AiTextPracticeScreen(
+                            activityType: 'grammar_tips',
+                            title: 'Grammar Tips',
+                            prompt:
+                                'Explain the difference between present simple and present continuous in your own words.',
+                            hint: 'Type your explanation here.',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ActivityCard(
                     title: 'Daily Quiz',
                     emoji: '🎯',
                     color: const Color(0xFFA855F7),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AiTextPracticeScreen(
+                            activityType: 'daily_quiz',
+                            title: 'Daily Quiz',
+                            prompt:
+                                'Answer in 3-4 sentences: What is one habit that helps you learn English every day?',
+                            hint: 'Type your quiz answer here.',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ActivityCard(
                     title: 'Listening Challenge',
                     emoji: '🎧',
                     color: const Color(0xFF3B82F6),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AiTextPracticeScreen(
+                            activityType: 'listening_challenge',
+                            title: 'Listening Challenge',
+                            prompt:
+                                'Listen to a short audio clip in the full version, then summarize the main idea here.',
+                            hint: 'Type your summary here.',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ActivityCard(
                     title: 'Writing Practice',
                     emoji: '✏️',
                     color: const Color(0xFFA855F7),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AiTextPracticeScreen(
+                            activityType: 'writing_practice',
+                            title: 'Writing Practice',
+                            prompt:
+                                'Write a short paragraph about your favorite place and why it matters to you.',
+                            hint: 'Type your paragraph here.',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
