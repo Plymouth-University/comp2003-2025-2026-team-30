@@ -19,6 +19,8 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
+    _userProfileService.ensureUserProfile(user);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
@@ -30,20 +32,22 @@ class HomeScreen extends StatelessWidget {
             }
 
             final data = snapshot.data?.data() ?? <String, dynamic>{};
+
             final displayName =
-                (data['displayName'] as String?)?.trim().isNotEmpty == true
-                ? data['displayName'] as String
-                : (user.email?.split('@').first ?? 'Learner');
+                ((data['displayName'] as String?)?.trim().isNotEmpty == true)
+                    ? data['displayName'] as String
+                    : (user.email?.split('@').first ?? 'Learner');
+
             final streakDays = (data['streakDays'] as num?)?.toInt() ?? 0;
             final lessons =
                 (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
             final totalMinutes =
                 (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+
             final hours = totalMinutes / 60.0;
-            final dailyTarget = 5;
-            final completedToday = totalMinutes > 0
-                ? (totalMinutes / 5).clamp(0, dailyTarget).toInt()
-                : 0;
+            const dailyTarget = 5;
+
+            final completedToday = lessons.clamp(0, dailyTarget).toInt();
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),

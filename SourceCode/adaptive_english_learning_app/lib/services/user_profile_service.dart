@@ -46,14 +46,26 @@ class UserProfileService {
   }
 
   Future<void> ensureUserProfile(User user) {
-    return _users.doc(user.uid).set({
-      'email': user.email,
-      'displayName': user.displayName,
-      'photoUrl': user.photoURL,
-      'lastSeenAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
+  return _users.doc(user.uid).set({
+    'email': user.email ?? '',
+    'displayName': user.displayName ?? 'Learner',
+    'photoUrl': user.photoURL,
+    'onboardingCompleted': false,
+    'nativeLanguage': null,
+    'targetLanguage': 'English',
+    'proficiencyLevel': null,
+    'learningGoal': null,
+    'learningStyle': null,
+    'currentXp': 0,
+    'currentLevel': 1,
+    'streakDays': 0,
+    'completedLessonsCount': 0,
+    'totalMinutesSpent': 0,
+    'lastSeenAt': FieldValue.serverTimestamp(),
+    'createdAt': FieldValue.serverTimestamp(),
+    'updatedAt': FieldValue.serverTimestamp(),
+  }, SetOptions(merge: true));
+}
 
   Future<void> saveOnboardingProfile({
     required String uid,
