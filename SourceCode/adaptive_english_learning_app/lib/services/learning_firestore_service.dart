@@ -96,6 +96,92 @@ class LearningFirestoreService {
     });
   }
 
+  Future<void> recordSpeakingAttempt({
+    required String uid,
+    required String prompt,
+    required String transcript,
+    required Map<String, dynamic> evaluation,
+  }) async {
+    final userRef = _firestore.collection('users').doc(uid);
+    final speakingRef = userRef.collection('speakingAttempts').doc();
+    final activityRef = userRef.collection('activityLogs').doc();
+
+    final score = (evaluation['score'] as num?)?.toInt() ?? 0;
+    const earnedXp = 15;
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(speakingRef, {
+        'prompt': prompt,
+        'transcript': transcript,
+        'score': score,
+        'feedback': evaluation['feedback'],
+        'correctedTranscript': evaluation['correctedTranscript'],
+        'provider': evaluation['provider'],
+        'model': evaluation['model'],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      transaction.set(activityRef, {
+        'type': 'speaking_practice_complete',
+        'prompt': prompt,
+        'score': score,
+        'xpAwarded': earnedXp,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      transaction.update(userRef, {
+        'currentXp': FieldValue.increment(earnedXp),
+        'totalMinutesSpent': FieldValue.increment(5),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> recordPracticeAttempt({
+    required String uid,
+    required String activityType,
+    required String prompt,
+    required String responseText,
+    required Map<String, dynamic> evaluation,
+  }) async {
+    final userRef = _firestore.collection('users').doc(uid);
+    final attemptRef = userRef.collection('practiceAttempts').doc();
+    final activityRef = userRef.collection('activityLogs').doc();
+    final score = (evaluation['score'] as num?)?.toInt() ?? 0;
+    const earnedXp = 12;
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(attemptRef, {
+        'activityType': activityType,
+        'prompt': prompt,
+        'responseText': responseText,
+        'score': score,
+        'feedback': evaluation['feedback'],
+        'correctedResponse': evaluation['correctedTranscript'],
+        'provider': evaluation['provider'],
+        'model': evaluation['model'],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      transaction.set(activityRef, {
+        'type': 'practice_attempt_complete',
+        'activityType': activityType,
+        'prompt': prompt,
+        'score': score,
+        'xpAwarded': earnedXp,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      transaction.update(userRef, {
+        'currentXp': FieldValue.increment(earnedXp),
+        'totalMinutesSpent': FieldValue.increment(5),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   String lessonDocIdFor(Map<String, dynamic> lesson) {
     final raw = (lesson['id'] ?? lesson['title'] ?? '').toString();
     final normalized = raw
