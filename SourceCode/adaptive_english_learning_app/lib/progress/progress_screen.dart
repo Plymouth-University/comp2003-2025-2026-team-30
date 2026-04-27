@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../services/user_profile_service.dart';
 import 'lessons_data.dart';
 
-// ---------------------------------------------------------------------------
+
 // Data model
-// ---------------------------------------------------------------------------
+
 
 class _ProgressData {
   final int completedLessonsCount;
@@ -31,9 +31,8 @@ class _ProgressData {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+
+
 
 // TODO: refine these thresholds with the team once more lessons are added.
 String _levelLabel(double percent) {
@@ -46,9 +45,8 @@ String _levelLabel(double percent) {
 String _dateKey(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-// ---------------------------------------------------------------------------
 // Screen
-// ---------------------------------------------------------------------------
+
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -106,7 +104,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final progressSnap = await progressFuture;
       final statDocs = await statDocFuture;
 
-      // --- User stats ---
+      // User stats 
       final userData = userDoc.data() ?? <String, dynamic>{};
       final completedLessonsCount =
           (userData['completedLessonsCount'] as num?)?.toInt() ?? 0;
@@ -116,7 +114,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final currentXp = (userData['currentXp'] as num?)?.toInt() ?? 0;
       final currentLevel = (userData['currentLevel'] as num?)?.toInt() ?? 1;
 
-      // --- Skill percents ---
+      // Skill percents 
       // Totals come from the static catalogue so the denominator updates
       // automatically when new lessons are added to lessons_data.dart.
       final totalBySkill = <String, int>{};
@@ -144,7 +142,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0);
       }
 
-      // --- Weekly chart ---
+      // Weekly chart 
       // activitiesCompleted × 5 min matches the increment used in
       // LearningFirestoreService.recordLessonSectionCompletion.
       final weeklyMinutes = statDocs.map((doc) {
