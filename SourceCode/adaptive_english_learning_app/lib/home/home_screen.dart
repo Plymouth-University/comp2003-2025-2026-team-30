@@ -47,7 +47,6 @@ class HomeScreen extends StatelessWidget {
             final achievements =
                 data['achievements'] as Map<String, dynamic>? ?? {};
 
-            final hours = totalMinutes / 60.0;
             const dailyTarget = 5;
             final completedToday = lessons.clamp(0, dailyTarget).toInt();
 
@@ -72,7 +71,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   _ProgressStatsRow(
                     lessons: lessons,
-                    hours: hours,
+                    totalMinutes: totalMinutes,
                     days: streakDays,
                   ),
                   const SizedBox(height: 18),
@@ -131,13 +130,10 @@ class _TopHeader extends StatelessWidget {
             ),
           ),
         ),
-    
       ],
     );
   }
 }
-
-
 
 class _DailyGoalCard extends StatelessWidget {
   final int done;
@@ -234,17 +230,21 @@ class _DailyGoalCard extends StatelessWidget {
 
 class _ProgressStatsRow extends StatelessWidget {
   final int lessons;
-  final double hours;
+  final int totalMinutes;
   final int days;
 
   const _ProgressStatsRow({
     required this.lessons,
-    required this.hours,
+    required this.totalMinutes,
     required this.days,
   });
 
   @override
   Widget build(BuildContext context) {
+    final timeValue = totalMinutes < 60
+        ? '${totalMinutes}m'
+        : '${(totalMinutes / 60).toStringAsFixed(1)}h';
+
     return Row(
       children: [
         Expanded(
@@ -258,8 +258,8 @@ class _ProgressStatsRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.timer_rounded,
-            value: hours.toStringAsFixed(1),
-            label: 'Hours',
+            value: timeValue,
+            label: 'Time',
           ),
         ),
         const SizedBox(width: 12),

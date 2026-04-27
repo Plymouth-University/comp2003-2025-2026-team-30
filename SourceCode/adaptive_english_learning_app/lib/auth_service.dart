@@ -34,10 +34,8 @@ class AuthService {
     final user = result.user;
 
     if (user != null) {
-      await _userProfileService.createInitialProfile(
-        user: user,
-        email: email,
-      );
+     await _userProfileService.ensureUserProfile(user);
+      
     }
 
     return user;
