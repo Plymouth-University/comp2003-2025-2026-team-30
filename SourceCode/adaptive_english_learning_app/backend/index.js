@@ -1,6 +1,7 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const { VertexAI } = require('@google-cloud/vertexai');
+const { TranslationServiceClient } = require('@google-cloud/translate').v3;
 
 const DEFAULT_LOCATION = process.env.VERTEX_AI_LOCATION || 'us-central1';
 const DEFAULT_MODEL = process.env.VERTEX_AI_MODEL || 'gemini-2.5-flash';
@@ -12,6 +13,19 @@ function getProjectId() {
         process.env.GOOGLE_CLOUD_PROJECT ||
         ''
     );
+}
+
+function createTranslationClient() {
+    const project = getProjectId();
+
+    if (!project) {
+        throw new Error('Missing Google Cloud project id. Set GCLOUD_PROJECT in the runtime environment.');
+    }
+
+    return {
+        project,
+        client: new TranslationServiceClient(),
+    };
 }
 
 function createVertexModel(modelName) {
@@ -101,6 +115,55 @@ function parseModelJson(text, fallback) {
     }
 }
 
+async function translateText(req, res) {
+    if (req.method !== 'POST') {
+        res.status(405).json({ error: 'Method not allowed' });
+        return;
+    }
+
+    const {
+        text = '',
+        texts = [],
+        sourceLanguageCode = 'en',
+        targetLanguageCode,
+    } = req.body || {};
+
+    const inputTexts = Array.isArray(texts) && texts.length > 0 ? texts : [text];
+
+    if (!targetLanguageCode || inputTexts.some((item) => !item)) {
+        res.status(400).json({ error: 'Missing text or targetLanguageCode.' });
+        return;
+    }
+
+    try {
+        const { project, client } = createTranslationClient();
+        const parent = `projects/${project}/locations/global`;
+        const [response] = await client.translateText({
+            parent,
+            contents: inputTexts,
+            mimeType: 'text/plain',
+            sourceLanguageCode,
+            targetLanguageCode,
+        });
+
+        const translations = (response.translations || []).map((item) => item.translatedText || '');
+
+        res.status(200).json({
+            translations,
+            translation: translations[0] || inputTexts[0],
+            sourceLanguageCode,
+            targetLanguageCode,
+            source: 'cloud-translation',
+        });
+    } catch (error) {
+        logger.error('Cloud Translation failed', { error: String(error) });
+        res.status(500).json({
+            error: 'Translation failed.',
+            details: String(error),
+        });
+    }
+}
+
 async function evaluateAttempt(req, res) {
     if (req.method !== 'POST') {
         res.status(405).json({ error: 'Method not allowed' });
@@ -160,3 +223,4 @@ async function evaluateAttempt(req, res) {
 
 exports.evaluateSpeakingAttempt = onRequest({ cors: true, invoker: 'public' }, evaluateAttempt);
 exports.evaluatePracticeFeedback = onRequest({ cors: true, invoker: 'public' }, evaluateAttempt);
+exports.translateAppText = onRequest({ cors: true, invoker: 'public' }, translateText);

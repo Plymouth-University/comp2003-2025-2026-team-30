@@ -5,6 +5,7 @@ import '../services/ai_tutor_service.dart';
 import '../services/learning_firestore_service.dart';
 import '../services/speech_recognition_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class PronunciationPracticeScreen extends StatefulWidget {
   const PronunciationPracticeScreen({super.key});
@@ -194,7 +195,7 @@ class _PronunciationPracticeScreenState
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Please sign in to start practice.')),
+        body: Center(child: TranslatedText('Please sign in to start practice.')),
       );
     }
 
@@ -213,7 +214,7 @@ class _PronunciationPracticeScreenState
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Pronunciation Practice'),
+            title: const TranslatedText('Pronunciation Practice'),
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
             elevation: 0,
@@ -234,17 +235,18 @@ class _PronunciationPracticeScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      TranslatedText(
                         'Speak, then get AI feedback',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
+                      // Keep English: this is the learner's speaking prompt
                       Text(prompt, style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 8),
-                      Text(
+                      TranslatedText(
                         'Matched to ${profileData['proficiencyLevel'] ?? 'your current level'} and ${profileData['learningGoal'] ?? 'your goal'}.',
                         style: const TextStyle(color: Colors.grey),
                       ),
@@ -258,7 +260,7 @@ class _PronunciationPracticeScreenState
                       child: ElevatedButton.icon(
                         onPressed: _toggleListening,
                         icon: Icon(_isListening ? Icons.stop : Icons.mic),
-                        label: Text(_isListening ? 'Stop Mic' : 'Start Mic'),
+                        label: TranslatedText(_isListening ? 'Stop Mic' : 'Start Mic'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isListening
                               ? Colors.redAccent
@@ -274,7 +276,7 @@ class _PronunciationPracticeScreenState
                             ? null
                             : () => _evaluateAttempt(profileData, prompt),
                         icon: const Icon(Icons.auto_awesome),
-                        label: Text(
+                        label: TranslatedText(
                           _isEvaluating ? 'Evaluating...' : 'Evaluate',
                         ),
                         style: ElevatedButton.styleFrom(
@@ -291,7 +293,7 @@ class _PronunciationPracticeScreenState
                   minLines: 3,
                   maxLines: 6,
                   decoration: InputDecoration(
-                    labelText: 'Transcript',
+                    label: const TranslatedText('Transcript'),
                     hintText:
                         'Your speech transcript appears here or type it manually',
                     border: const OutlineInputBorder(),
@@ -383,7 +385,7 @@ class _PronunciationPracticeScreenState
                           _errorMessage = null;
                         });
                       },
-                      child: const Text('Try another prompt'),
+                      child: const TranslatedText('Try another prompt'),
                     ),
                   ),
                 ],
