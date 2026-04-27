@@ -437,9 +437,9 @@ class _SkillsSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionTitle(title: 'Skills'),
-        const SizedBox(height: 12),
+      children: const [
+        _SectionTitle(title: 'Skills'),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -675,8 +675,9 @@ class _ThisWeekSection extends StatelessWidget {
                                   (_chartHeight - 8);
                           return Expanded(
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 3,
+                              ),
                               child: Container(
                                 height: barH,
                                 decoration: BoxDecoration(

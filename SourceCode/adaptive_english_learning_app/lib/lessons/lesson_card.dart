@@ -4,33 +4,19 @@ import 'lesson_details_screen.dart';
 class LessonCard extends StatelessWidget {
   final Map<String, dynamic> lesson;
 
-  const LessonCard({
-    super.key,
-    required this.lesson,
-  });
+  const LessonCard({super.key, required this.lesson});
 
   static final Map<String, Map<String, dynamic>> skillThemes = {
-    "Listening": {
-      "color": Colors.green,
-      "icon": Icons.headphones,
-    },
-    "Speaking": {
-      "color": Colors.orange,
-      "icon": Icons.mic,
-    },
-    "Reading": {
-      "color": Colors.blue,
-      "icon": Icons.menu_book,
-    },
-    "Writing": {
-      "color": Colors.purple,
-      "icon": Icons.edit,
-    },
+    "Listening": {"color": Colors.green, "icon": Icons.headphones},
+    "Speaking": {"color": Colors.orange, "icon": Icons.mic},
+    "Reading": {"color": Colors.blue, "icon": Icons.menu_book},
+    "Writing": {"color": Colors.purple, "icon": Icons.edit},
   };
 
   @override
   Widget build(BuildContext context) {
-    final theme = skillThemes[lesson["skill"]] ??
+    final theme =
+        skillThemes[lesson["skill"]] ??
         {"color": Colors.grey, "icon": Icons.school};
 
     final color = theme["color"];
@@ -52,28 +38,23 @@ class LessonCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Row(
           children: [
-
             /// ICON BOX (now themed)
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                theme["icon"],
-                size: 30,
-                color: color,
-              ),
+              child: Icon(theme["icon"], size: 30, color: color),
             ),
 
             const SizedBox(width: 16),
@@ -83,7 +64,6 @@ class LessonCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   /// TITLE
                   Text(
                     lesson["title"],
@@ -100,18 +80,12 @@ class LessonCard extends StatelessWidget {
                     children: [
                       Text(
                         lesson["difficulty"],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 10),
                       Text(
                         lesson["duration"],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -130,7 +104,7 @@ class LessonCard extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
