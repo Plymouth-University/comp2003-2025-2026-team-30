@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/ai_tutor_service.dart';
 import '../services/learning_firestore_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class AiTextPracticeScreen extends StatefulWidget {
   final String activityType;
@@ -126,7 +127,7 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Please sign in to start practice.')),
+        body: Center(child: TranslatedText('Please sign in to start practice.')),
       );
     }
 
@@ -145,7 +146,7 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.title),
+            title: TranslatedText(widget.title),
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
             elevation: 0,
@@ -166,17 +167,18 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      TranslatedText(
                         'AI-guided practice',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
+                      // Keep English: this is the learner's practice prompt
                       Text(prompt),
                       const SizedBox(height: 8),
-                      Text(
+                      TranslatedText(
                         'Tailored to ${profileData['proficiencyLevel'] ?? 'your current level'} and ${profileData['learningGoal'] ?? 'your goal'}.',
                         style: const TextStyle(color: Colors.grey),
                       ),
@@ -189,7 +191,7 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
                   minLines: 4,
                   maxLines: 8,
                   decoration: InputDecoration(
-                    labelText: widget.title,
+                    label: TranslatedText(widget.title),
                     hintText: hint,
                     border: const OutlineInputBorder(),
                   ),
@@ -204,7 +206,7 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
                             : () =>
                                   _evaluateResponse(profileData, prompt, hint),
                         icon: const Icon(Icons.auto_awesome),
-                        label: Text(
+                        label: TranslatedText(
                           _isEvaluating ? 'Evaluating...' : 'Ask AI to Review',
                         ),
                         style: ElevatedButton.styleFrom(
@@ -216,7 +218,7 @@ class _AiTextPracticeScreenState extends State<AiTextPracticeScreen> {
                     const SizedBox(width: 12),
                     OutlinedButton(
                       onPressed: _reset,
-                      child: const Text('Reset'),
+                      child: const TranslatedText('Reset'),
                     ),
                   ],
                 ),

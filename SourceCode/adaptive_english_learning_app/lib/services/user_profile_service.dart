@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProfileService {
   UserProfileService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -13,10 +13,8 @@ class UserProfileService {
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) {
     return _users.doc(uid).snapshots();
   }
-  
-  Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserProfile(
-    String uid,
-  ) {
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserProfile(String uid) {
     return _users.doc(uid).get();
   }
 
@@ -30,7 +28,8 @@ class UserProfileService {
       'photoUrl': user.photoURL,
       'onboardingCompleted': false,
       'nativeLanguage': null,
-      'targetLanguage': 'English',
+      'preferredLocaleCode': 'en',
+      'region': null,
       'proficiencyLevel': null,
       'learningGoal': null,
       'learningStyle': null,
@@ -82,6 +81,58 @@ class UserProfileService {
     return _users.doc(uid).set({
       ...answers,
       'onboardingCompleted': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateProfileSettings({
+    required String uid,
+    String? displayName,
+    String? nativeLanguage,
+    String? preferredLocaleCode,
+  }) {
+    return _users.doc(uid).set({
+      if (displayName != null) 'displayName': displayName,
+      if (nativeLanguage != null) 'nativeLanguage': nativeLanguage,
+      if (preferredLocaleCode != null)
+        'preferredLocaleCode': preferredLocaleCode,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateLearningSettings({
+    required String uid,
+    String? proficiencyLevel,
+    String? learningGoal,
+    String? learningStyle,
+  }) {
+    return _users.doc(uid).set({
+      if (proficiencyLevel != null) 'proficiencyLevel': proficiencyLevel,
+      if (learningGoal != null) 'learningGoal': learningGoal,
+      if (learningStyle != null) 'learningStyle': learningStyle,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateLanguageRegionSettings({
+    required String uid,
+    String? nativeLanguage,
+    List<String>? knownLanguages,
+    String? region,
+    String? detectedLanguageCode,
+    String? preferredLocaleCode,
+  }) {
+    return _users.doc(uid).set({
+      if (nativeLanguage != null) 'nativeLanguage': nativeLanguage,
+      if (knownLanguages != null) 'knownLanguages': knownLanguages,
+      if (region != null) 'region': region,
+      if (detectedLanguageCode != null)
+        'detectedLanguageCode': detectedLanguageCode,
+      if (preferredLocaleCode != null)
+        'preferredLocaleCode': preferredLocaleCode,
       'updatedAt': FieldValue.serverTimestamp(),
       'lastSeenAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
