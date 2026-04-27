@@ -1,72 +1,255 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/user_profile_service.dart';
+import 'lessons_data.dart';
 
-class ProgressScreen extends StatelessWidget {
-  ProgressScreen({super.key});
 
-  final UserProfileService _userProfileService = UserProfileService();
+// Data model
+
+
+class _ProgressData {
+  final int completedLessonsCount;
+  final double hours;
+  final int streakDays;
+  final int currentXp;
+  final int currentLevel;
+  final Map<String, double> skillPercents;
+  final List<double> weeklyMinutes;
+  final List<String> weekDayLabels;
+
+  const _ProgressData({
+    required this.completedLessonsCount,
+    required this.hours,
+    required this.streakDays,
+    required this.currentXp,
+    required this.currentLevel,
+    required this.skillPercents,
+    required this.weeklyMinutes,
+    required this.weekDayLabels,
+  });
+}
+
+
+
+
+// TODO: refine these thresholds with the team once more lessons are added.
+String _levelLabel(double percent) {
+  if (percent <= 0.25) return 'Beginner';
+  if (percent <= 0.50) return 'Elementary';
+  if (percent <= 0.75) return 'Intermediate';
+  return 'Advanced';
+}
+
+String _dateKey(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+// Screen
+
+
+class ProgressScreen extends StatefulWidget {
+  const ProgressScreen({super.key});
+
+  @override
+  State<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends State<ProgressScreen> {
+  bool _loading = true;
+  String? _error;
+  _ProgressData? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _error = 'not_signed_in';
+        _loading = false;
+      });
+      return;
+    }
+
+    try {
+      final db = FirebaseFirestore.instance;
+      final today = DateTime.now();
+      final weekDates =
+          List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
+
+      // Kick off all three fetches in parallel before awaiting any.
+      final userDocFuture = UserProfileService().fetchUserProfile(user.uid);
+      final progressFuture = db
+          .collection('users')
+          .doc(user.uid)
+          .collection('lessonProgress')
+          .get();
+      final statDocFuture = Future.wait(
+        weekDates.map(
+          (d) => db
+              .collection('users')
+              .doc(user.uid)
+              .collection('dailyStats')
+              .doc(_dateKey(d))
+              .get(),
+        ),
+      );
+
+      final userDoc = await userDocFuture;
+      final progressSnap = await progressFuture;
+      final statDocs = await statDocFuture;
+
+      // User stats 
+      final userData = userDoc.data() ?? <String, dynamic>{};
+      final completedLessonsCount =
+          (userData['completedLessonsCount'] as num?)?.toInt() ?? 0;
+      final totalMinutes =
+          (userData['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+      final streakDays = (userData['streakDays'] as num?)?.toInt() ?? 0;
+      final currentXp = (userData['currentXp'] as num?)?.toInt() ?? 0;
+      final currentLevel = (userData['currentLevel'] as num?)?.toInt() ?? 1;
+
+      // Skill percents 
+      // Totals come from the static catalogue so the denominator updates
+      // automatically when new lessons are added to lessons_data.dart.
+      final totalBySkill = <String, int>{};
+      for (final lesson in kAllLessons) {
+        final skill = lesson['skill'] as String;
+        totalBySkill[skill] = (totalBySkill[skill] ?? 0) + 1;
+      }
+
+      final completedBySkill = <String, int>{};
+      for (final doc in progressSnap.docs) {
+        final d = doc.data();
+        if (d['status'] == 'completed') {
+          final skill = d['skill'] as String? ?? '';
+          if (skill.isNotEmpty) {
+            completedBySkill[skill] = (completedBySkill[skill] ?? 0) + 1;
+          }
+        }
+      }
+
+      final skillPercents = <String, double>{};
+      for (final skill in ['Listening', 'Speaking', 'Reading', 'Writing']) {
+        final total = totalBySkill[skill] ?? 0;
+        final done = completedBySkill[skill] ?? 0;
+        skillPercents[skill] =
+            total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0);
+      }
+
+      // Weekly chart 
+      // activitiesCompleted × 5 min matches the increment used in
+      // LearningFirestoreService.recordLessonSectionCompletion.
+      final weeklyMinutes = statDocs.map((doc) {
+        final acts = (doc.data()?['activitiesCompleted'] as num?)?.toInt() ?? 0;
+        return acts * 5.0;
+      }).toList();
+
+      final weekDayLabels = weekDates
+          .map((d) =>
+              ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1])
+          .toList();
+
+      setState(() {
+        _data = _ProgressData(
+          completedLessonsCount: completedLessonsCount,
+          hours: totalMinutes / 60.0,
+          streakDays: streakDays,
+          currentXp: currentXp,
+          currentLevel: currentLevel,
+          skillPercents: skillPercents,
+          weeklyMinutes: weeklyMinutes,
+          weekDayLabels: weekDayLabels,
+        );
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
+    if (_loading) {
       return const Scaffold(
-        body: Center(child: Text('Please sign in to view progress.')),
+        backgroundColor: Color(0xFFF6F7FB),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
+
+    if (_error == 'not_signed_in') {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF6F7FB),
+        body: Center(child: Text('Please sign in to view your progress.')),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF6F7FB),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Could not load your progress. Please try again later.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final d = _data!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
-        child: StreamBuilder(
-          stream: _userProfileService.watchUserProfile(user.uid),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final data = snapshot.data?.data() ?? <String, dynamic>{};
-            final lessons =
-                (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
-            final streak = (data['streakDays'] as num?)?.toInt() ?? 0;
-            final currentXp = (data['currentXp'] as num?)?.toInt() ?? 0;
-            final currentLevel = (data['currentLevel'] as num?)?.toInt() ?? 1;
-            final totalMinutes =
-                (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
-            final hours = totalMinutes / 60.0;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _ScreenHeader(),
-                  const SizedBox(height: 20),
-                  _OverviewSection(
-                    lessons: lessons,
-                    hours: hours,
-                    streak: streak,
-                    currentXp: currentXp,
-                    currentLevel: currentLevel,
-                  ),
-                  const SizedBox(height: 24),
-                  const _SkillsSection(),
-                  const SizedBox(height: 24),
-                  _ThisWeekSection(totalMinutes: totalMinutes),
-                  const SizedBox(height: 24),
-                  _AchievementsSection(lessons: lessons, streak: streak),
-                ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _ScreenHeader(),
+              const SizedBox(height: 20),
+              _OverviewSection(
+                lessons: d.completedLessonsCount,
+                hours: d.hours,
+                streak: d.streakDays,
+                currentXp: d.currentXp,
+                currentLevel: d.currentLevel,
               ),
-            );
-          },
+              const SizedBox(height: 24),
+              _SkillsSection(skillPercents: d.skillPercents),
+              const SizedBox(height: 24),
+              _ThisWeekSection(
+                weeklyMinutes: d.weeklyMinutes,
+                dayLabels: d.weekDayLabels,
+              ),
+              const SizedBox(height: 24),
+              _AchievementsSection(
+                lessons: d.completedLessonsCount,
+                streak: d.streakDays,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Sub-widgets (visual design unchanged)
+// ---------------------------------------------------------------------------
 
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader();
@@ -241,10 +424,17 @@ class _StatCard extends StatelessWidget {
 }
 
 class _SkillsSection extends StatelessWidget {
-  const _SkillsSection();
+  final Map<String, double> skillPercents;
+
+  const _SkillsSection({required this.skillPercents});
 
   @override
   Widget build(BuildContext context) {
+    final listeningPct = skillPercents['Listening'] ?? 0.0;
+    final speakingPct  = skillPercents['Speaking']  ?? 0.0;
+    final readingPct   = skillPercents['Reading']   ?? 0.0;
+    final writingPct   = skillPercents['Writing']   ?? 0.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
@@ -255,26 +445,56 @@ class _SkillsSection extends StatelessWidget {
             Expanded(
               child: _SkillCard(
                 icon: Icons.headphones_rounded,
-                iconColor: Color(0xFF2F80ED),
-                iconBg: Color(0xFFEFF6FF),
-                borderColor: Color(0xFF2F80ED),
+                iconColor: const Color(0xFF2F80ED),
+                iconBg: const Color(0xFFEFF6FF),
+                borderColor: const Color(0xFF2F80ED),
                 skill: 'Listening',
-                level: 'Intermediate',
-                percent: 0.65,
-                progressColor: Color(0xFF2F80ED),
+                level: _levelLabel(listeningPct),
+                percent: listeningPct,
+                progressColor: const Color(0xFF2F80ED),
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: _SkillCard(
                 icon: Icons.mic_none_rounded,
-                iconColor: Color(0xFFF97316),
-                iconBg: Color(0xFFFFEDD5),
-                borderColor: Color(0xFFF97316),
+                iconColor: const Color(0xFFF97316),
+                iconBg: const Color(0xFFFFEDD5),
+                borderColor: const Color(0xFFF97316),
                 skill: 'Speaking',
-                level: 'Elementary',
-                percent: 0.45,
-                progressColor: Color(0xFFF97316),
+                level: _levelLabel(speakingPct),
+                percent: speakingPct,
+                progressColor: const Color(0xFFF97316),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _SkillCard(
+                icon: Icons.menu_book_rounded,
+                iconColor: const Color(0xFF10B981),
+                iconBg: const Color(0xFFECFDF5),
+                borderColor: const Color(0xFF10B981),
+                skill: 'Reading',
+                level: _levelLabel(readingPct),
+                percent: readingPct,
+                progressColor: const Color(0xFF10B981),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SkillCard(
+                icon: Icons.edit_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                iconBg: const Color(0xFFF5F3FF),
+                borderColor: const Color(0xFF8B5CF6),
+                skill: 'Writing',
+                level: _levelLabel(writingPct),
+                percent: writingPct,
+                progressColor: const Color(0xFF8B5CF6),
               ),
             ),
           ],
@@ -307,20 +527,22 @@ class _SkillCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: borderColor, width: 3),
-          top: const BorderSide(color: Color(0xFFE5E7EB)),
-          right: const BorderSide(color: Color(0xFFE5E7EB)),
-          bottom: const BorderSide(color: Color(0xFFE5E7EB)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: borderColor, width: 3),
+            top: const BorderSide(color: Color(0xFFE5E7EB)),
+            right: const BorderSide(color: Color(0xFFE5E7EB)),
+            bottom: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -382,26 +604,28 @@ class _SkillCard extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
 }
 
 class _ThisWeekSection extends StatelessWidget {
-  final int totalMinutes;
+  final List<double> weeklyMinutes;
+  final List<String> dayLabels;
 
-  const _ThisWeekSection({required this.totalMinutes});
+  const _ThisWeekSection({
+    required this.weeklyMinutes,
+    required this.dayLabels,
+  });
 
-  static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _todayIndex = 1;
   static const _maxValue = 40.0;
   static const _chartHeight = 120.0;
 
   @override
   Widget build(BuildContext context) {
-    final minutes = totalMinutes.clamp(0, 280);
-    final value = (minutes / 7).toDouble();
-    final values = List<double>.filled(7, value);
+    // Today is always the rightmost bar — weekDates is generated ending with today.
+    final todayIndex = weeklyMinutes.length - 1;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -444,9 +668,11 @@ class _ThisWeekSection extends StatelessWidget {
                       height: _chartHeight,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: List.generate(_days.length, (i) {
+                        children: List.generate(weeklyMinutes.length, (i) {
                           final barH =
-                              (values[i] / _maxValue) * (_chartHeight - 8);
+                              (weeklyMinutes[i].clamp(0, _maxValue) /
+                                      _maxValue) *
+                                  (_chartHeight - 8);
                           return Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -455,7 +681,7 @@ class _ThisWeekSection extends StatelessWidget {
                               child: Container(
                                 height: barH,
                                 decoration: BoxDecoration(
-                                  color: i == _todayIndex
+                                  color: i == todayIndex
                                       ? const Color(0xFF2F80ED)
                                       : const Color(0xFFD1D5DB),
                                   borderRadius: const BorderRadius.vertical(
@@ -470,10 +696,10 @@ class _ThisWeekSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Row(
-                      children: List.generate(_days.length, (i) {
+                      children: List.generate(dayLabels.length, (i) {
                         return Expanded(
                           child: Text(
-                            _days[i],
+                            dayLabels[i],
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 10,
@@ -513,6 +739,8 @@ class _AchievementsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: agree unlock conditions with the team before wiring these to real data.
+    //       Placeholder logic (lessons > 0, streak >= 7, etc.) is left in place for now.
     final achievements = [
       _AchievementData(
         icon: Icons.school_rounded,
@@ -607,9 +835,8 @@ class _AchievementBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = data.unlocked ? data.color : const Color(0xFFF3F4F6);
     final iconColor = data.unlocked ? Colors.white : const Color(0xFF9CA3AF);
-    final labelColor = data.unlocked
-        ? const Color(0xFF0F172A)
-        : const Color(0xFF9CA3AF);
+    final labelColor =
+        data.unlocked ? const Color(0xFF0F172A) : const Color(0xFF9CA3AF);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
