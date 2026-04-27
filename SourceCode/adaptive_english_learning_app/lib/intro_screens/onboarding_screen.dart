@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../services/app_language_service.dart';
 import '../widgets/main_navigation.dart';
 import '../services/user_profile_service.dart';
 
@@ -41,6 +42,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'proficiencyLevel': proficiencyLevel,
       'learningGoal': learningGoal,
       'learningStyle': learningStyle,
+      'preferredLocaleCode':
+          AppLanguageService.instance.languageCodeForName(nativeLanguage) ??
+          'en',
     };
 
     await _userProfileService.saveOnboardingProfile(
@@ -56,6 +60,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'source': 'first_run_onboarding',
       },
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    await AppLanguageService.instance.setLocaleFromProfile(answers);
 
     if (!mounted) {
       return;
