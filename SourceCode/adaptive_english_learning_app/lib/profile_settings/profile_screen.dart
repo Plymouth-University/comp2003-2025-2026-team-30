@@ -6,8 +6,13 @@ import '../login_page.dart';
 import '../services/app_language_service.dart';
 import '../services/app_translation_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
+import 'account_settings_screen.dart';
+import 'about_screen.dart';
 import 'language_region_screen.dart';
 import 'learning_goals_screen.dart';
+import 'help_support_screen.dart';
+import 'notifications_screen.dart';
 import 'update_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -26,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Hours',
     'Day Streak',
     'Update Profile',
+    'Account Settings',
     'Learning Goals + Style',
     'Language & Region',
     'Notifications',
@@ -191,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               borderRadius:
                                                   BorderRadius.circular(20.0),
                                             ),
-                                            child: Text(
+                                            child: TranslatedText(
                                               level,
                                               style: Theme.of(context)
                                                   .textTheme
@@ -267,8 +273,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   indent: 56,
                                 ),
                                 _MenuItem(
-                                  icon: Icons.track_changes,
+                                  icon: Icons.manage_accounts,
                                   title: labels[6],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const AccountSettingsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.track_changes,
+                                  title: labels[7],
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -285,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 _MenuItem(
                                   icon: Icons.public,
-                                  title: labels[7],
+                                  title: labels[8],
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -302,8 +325,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 _MenuItem(
                                   icon: Icons.notifications,
-                                  title: labels[8],
-                                  onTap: () {},
+                                  title: labels[9],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NotificationsScreen(),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 Divider(
                                   color: Colors.grey.shade200,
@@ -312,8 +342,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 _MenuItem(
                                   icon: Icons.help,
-                                  title: labels[9],
-                                  onTap: () {},
+                                  title: labels[10],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const HelpSupportScreen(),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 Divider(
                                   color: Colors.grey.shade200,
@@ -322,8 +359,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 _MenuItem(
                                   icon: Icons.info,
-                                  title: labels[10],
-                                  onTap: () {},
+                                  title: labels[11],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const AboutScreen(),
+                                      ),
+                                    );
+                                  },
                                   isLast: true,
                                 ),
                               ],
@@ -378,7 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(width: 8.0),
                                   Text(
-                                    labels[11],
+                                    labels[12],
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge
@@ -397,13 +440,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Column(
                             children: [
                               Text(
-                                labels[12],
+                                labels[13],
                                 style: Theme.of(context).textTheme.labelMedium
                                     ?.copyWith(color: Colors.grey),
                               ),
                               const SizedBox(height: 4.0),
                               Text(
-                                labels[13],
+                                labels[14],
                                 style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(color: Colors.grey),
                               ),

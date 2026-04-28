@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'lesson_details_screen.dart';
+import '../widgets/translated_text.dart';
 
 class LessonCard extends StatelessWidget {
   final Map<String, dynamic> lesson;
@@ -65,7 +66,7 @@ class LessonCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// TITLE
-                  Text(
+                  TranslatedText(
                     lesson["title"],
                     style: const TextStyle(
                       fontSize: 18,
@@ -78,12 +79,12 @@ class LessonCard extends StatelessWidget {
                   /// META INFO (cleaner than chips)
                   Row(
                     children: [
-                      Text(
+                      TranslatedText(
                         lesson["difficulty"],
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 10),
-                      Text(
+                      TranslatedText(
                         lesson["duration"],
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),

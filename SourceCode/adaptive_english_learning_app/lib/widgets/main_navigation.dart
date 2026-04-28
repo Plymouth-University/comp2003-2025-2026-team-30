@@ -85,7 +85,7 @@ class _MainNavigationState extends State<MainNavigation> {
       builder: (context, snapshot) {
         final labels = snapshot.data ?? _baseLabels;
         return Scaffold(
-          body: _pages[_selectedIndex],
+          body: IndexedStack(index: _selectedIndex, children: _pages),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,

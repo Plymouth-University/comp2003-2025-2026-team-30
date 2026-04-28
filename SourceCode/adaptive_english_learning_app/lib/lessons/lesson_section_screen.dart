@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/ai_tutor_service.dart';
 import '../services/learning_firestore_service.dart';
-import '../services/speech_recognition_service.dart';
+import '../widgets/translated_text.dart';
 
 class LessonSectionScreen extends StatefulWidget {
   final Map<String, dynamic> lesson;
@@ -170,9 +170,10 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(section["title"] ?? ''),
+        title: TranslatedText(section["title"]),
         backgroundColor: color,
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -187,15 +188,16 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
 
             const SizedBox(height: 8),
 
-            Text(
-              "Section ${widget.currentIndex + 1} of ${outline.length}",
+            TranslatedText(
+              "Section ${currentIndex + 1} of ${outline.length}",
               style: TextStyle(color: Colors.grey[600]),
             ),
 
             const SizedBox(height: 20),
 
-            Text(
-              section["title"] ?? '',
+            /// TITLE
+            TranslatedText(
+              section["title"],
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
@@ -226,7 +228,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
                         ),
                       );
                     },
-                    child: const Text("Previous"),
+                    child: const TranslatedText("Previous"),
                   )
                 else
                   const SizedBox(),
@@ -250,10 +252,8 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
                       Navigator.pop(context);
                     }
                   },
-                  child: Text(
-                    widget.currentIndex < outline.length - 1
-                        ? "Next"
-                        : "Finish",
+                  child: TranslatedText(
+                    currentIndex < outline.length - 1 ? "Next" : "Finish",
                   ),
                 ),
               ],
@@ -275,7 +275,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
       case "Writing":
         return _buildWriting(section, color);
       default:
-        return Text(section["description"] ?? "");
+        return TranslatedText(section["description"] ?? "");
     }
   }
 
@@ -288,7 +288,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        const TranslatedText(
           "Listen Carefully",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -309,7 +309,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.play_arrow),
-                label: const Text("Play Audio"),
+                label: const TranslatedText("Play Audio"),
                 style: ElevatedButton.styleFrom(backgroundColor: color),
               ),
             ],
@@ -318,14 +318,13 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
 
         const SizedBox(height: 20),
 
-        Text(prompt),
+        TranslatedText(section["description"] ?? ""),
 
         const SizedBox(height: 15),
 
-        TextField(
-          controller: _controller,
-          decoration: const InputDecoration(
-            hintText: "Type what you heard...",
+        const TextField(
+          decoration: InputDecoration(
+            hint: TranslatedText("Type what you heard..."),
             border: OutlineInputBorder(),
           ),
         ),
@@ -355,7 +354,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        const TranslatedText(
           "Practice Speaking",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -368,8 +367,8 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            prompt,
+          child: TranslatedText(
+            section["description"] ?? "Say the sentence clearly",
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
@@ -406,39 +405,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
 
         const SizedBox(height: 10),
 
-        Text(
-          _isRecording ? "Tap to stop recording" : "Tap to record",
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-
-        /// Show transcript once available
-        if (_transcript.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '"$_transcript"',
-              style: const TextStyle(fontStyle: FontStyle.italic),
-            ),
-          ),
-
-          if (!_isRecording && _aiResult == null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: _aiFeedbackButton(
-                label: "Evaluate My Speaking",
-                color: color,
-                onPressed: () => _submitSpeakingForFeedback(prompt),
-              ),
-            ),
-        ],
-
-        if (_aiResult != null) _buildFeedbackCard(_aiResult!, color),
+        const TranslatedText("Tap to record"),
       ],
     );
   }
@@ -452,7 +419,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Reading Task",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -465,19 +432,20 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: SingleChildScrollView(child: Text(prompt)),
+          child: SingleChildScrollView(
+            child: TranslatedText(section["description"] ?? ""),
+          ),
         ),
 
         const SizedBox(height: 20),
 
-        const Text("Answer the question:"),
+        const TranslatedText("Answer the question:"),
 
         const SizedBox(height: 10),
 
-        TextField(
-          controller: _controller,
-          decoration: const InputDecoration(
-            hintText: "Your answer...",
+        const TextField(
+          decoration: InputDecoration(
+            hint: TranslatedText("Your answer..."),
             border: OutlineInputBorder(),
           ),
         ),
@@ -507,22 +475,22 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Writing Task",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 20),
 
-        Text(prompt),
+        TranslatedText(section["description"] ?? ""),
 
         const SizedBox(height: 10),
 
         TextField(
           controller: _controller,
           maxLines: 6,
-          decoration: const InputDecoration(
-            hintText: "Write your response...",
+          decoration: InputDecoration(
+            hint: TranslatedText("Write your response..."),
             border: OutlineInputBorder(),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class LearningGoalsScreen extends StatefulWidget {
   const LearningGoalsScreen({super.key});
@@ -88,12 +89,14 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Please sign in to update your goals.')),
+        body: Center(
+          child: TranslatedText('Please sign in to update your goals.'),
+        ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Learning Goals')),
+      appBar: AppBar(title: const TranslatedText('Learning Goals')),
       body: StreamBuilder(
         stream: _userProfileService.watchUserProfile(user.uid),
         builder: (context, snapshot) {
@@ -109,21 +112,22 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const TranslatedText(
                   'Set your current learning goal and preferred practice style.',
-                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
                   initialValue: _learningGoal,
                   decoration: const InputDecoration(
-                    labelText: 'Learning goal',
+                    label: TranslatedText('Learning goal'),
                     border: OutlineInputBorder(),
                   ),
                   items: _goalOptions
                       .map(
-                        (goal) =>
-                            DropdownMenuItem(value: goal, child: Text(goal)),
+                        (goal) => DropdownMenuItem(
+                          value: goal,
+                          child: TranslatedText(goal),
+                        ),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -136,13 +140,15 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _learningStyle,
                   decoration: const InputDecoration(
-                    labelText: 'Learning style',
+                    label: TranslatedText('Learning style'),
                     border: OutlineInputBorder(),
                   ),
                   items: _styleOptions
                       .map(
-                        (style) =>
-                            DropdownMenuItem(value: style, child: Text(style)),
+                        (style) => DropdownMenuItem(
+                          value: style,
+                          child: TranslatedText(style),
+                        ),
                       )
                       .toList(),
                   onChanged: (value) {
@@ -155,7 +161,7 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _proficiencyLevel,
                   decoration: const InputDecoration(
-                    labelText: 'Proficiency level',
+                    label: TranslatedText('Proficiency level'),
                     border: OutlineInputBorder(),
                   ),
                   items:
@@ -169,7 +175,7 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
                           .map(
                             (level) => DropdownMenuItem(
                               value: level,
-                              child: Text(level),
+                              child: TranslatedText(level),
                             ),
                           )
                           .toList(),
@@ -184,7 +190,9 @@ class _LearningGoalsScreenState extends State<LearningGoalsScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : () => _save(user.uid),
-                    child: Text(_isSaving ? 'Saving...' : 'Save goals'),
+                    child: TranslatedText(
+                      _isSaving ? 'Saving...' : 'Save goals',
+                    ),
                   ),
                 ),
               ],

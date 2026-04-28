@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/user_profile_service.dart';
-import 'lessons_data.dart';
+import '../widgets/translated_text.dart';
 
 
 // Data model
@@ -69,142 +69,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Future<void> _loadData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      setState(() {
-        _error = 'not_signed_in';
-        _loading = false;
-      });
-      return;
-    }
-
-    try {
-      final db = FirebaseFirestore.instance;
-      final today = DateTime.now();
-      final weekDates =
-          List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
-
-      // Kick off all three fetches in parallel before awaiting any.
-      final userDocFuture = UserProfileService().fetchUserProfile(user.uid);
-      final progressFuture = db
-          .collection('users')
-          .doc(user.uid)
-          .collection('lessonProgress')
-          .get();
-      final statDocFuture = Future.wait(
-        weekDates.map(
-          (d) => db
-              .collection('users')
-              .doc(user.uid)
-              .collection('dailyStats')
-              .doc(_dateKey(d))
-              .get(),
-        ),
-      );
-
-      final userDoc = await userDocFuture;
-      final progressSnap = await progressFuture;
-      final statDocs = await statDocFuture;
-
-      // User stats 
-      final userData = userDoc.data() ?? <String, dynamic>{};
-      final completedLessonsCount =
-          (userData['completedLessonsCount'] as num?)?.toInt() ?? 0;
-      final totalMinutes =
-          (userData['totalMinutesSpent'] as num?)?.toInt() ?? 0;
-      final streakDays = (userData['streakDays'] as num?)?.toInt() ?? 0;
-      final currentXp = (userData['currentXp'] as num?)?.toInt() ?? 0;
-      final currentLevel = (userData['currentLevel'] as num?)?.toInt() ?? 1;
-
-      // Skill percents 
-      // Totals come from the static catalogue so the denominator updates
-      // automatically when new lessons are added to lessons_data.dart.
-      final totalBySkill = <String, int>{};
-      for (final lesson in kAllLessons) {
-        final skill = lesson['skill'] as String;
-        totalBySkill[skill] = (totalBySkill[skill] ?? 0) + 1;
-      }
-
-      final completedBySkill = <String, int>{};
-      for (final doc in progressSnap.docs) {
-        final d = doc.data();
-        if (d['status'] == 'completed') {
-          final skill = d['skill'] as String? ?? '';
-          if (skill.isNotEmpty) {
-            completedBySkill[skill] = (completedBySkill[skill] ?? 0) + 1;
-          }
-        }
-      }
-
-      final skillPercents = <String, double>{};
-      for (final skill in ['Listening', 'Speaking', 'Reading', 'Writing']) {
-        final total = totalBySkill[skill] ?? 0;
-        final done = completedBySkill[skill] ?? 0;
-        skillPercents[skill] =
-            total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0);
-      }
-
-      // Weekly chart 
-      // activitiesCompleted × 5 min matches the increment used in
-      // LearningFirestoreService.recordLessonSectionCompletion.
-      final weeklyMinutes = statDocs.map((doc) {
-        final acts = (doc.data()?['activitiesCompleted'] as num?)?.toInt() ?? 0;
-        return acts * 5.0;
-      }).toList();
-
-      final weekDayLabels = weekDates
-          .map((d) =>
-              ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1])
-          .toList();
-
-      setState(() {
-        _data = _ProgressData(
-          completedLessonsCount: completedLessonsCount,
-          hours: totalMinutes / 60.0,
-          streakDays: streakDays,
-          currentXp: currentXp,
-          currentLevel: currentLevel,
-          skillPercents: skillPercents,
-          weeklyMinutes: weeklyMinutes,
-          weekDayLabels: weekDayLabels,
-        );
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF6F7FB),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_error == 'not_signed_in') {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF6F7FB),
-        body: Center(child: Text('Please sign in to view your progress.')),
-      );
-    }
-
-    if (_error != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF6F7FB),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Could not load your progress. Please try again later.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-        ),
+        body: Center(child: TranslatedText('Please sign in to view progress.')),
       );
     }
 
@@ -259,7 +125,7 @@ class _ScreenHeader extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TranslatedText(
           'Your Progress',
           style: TextStyle(
             fontSize: 22,
@@ -340,7 +206,7 @@ class _OverviewSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              TranslatedText(
                 'Level $currentLevel',
                 style: const TextStyle(
                   fontSize: 16,
@@ -348,7 +214,7 @@ class _OverviewSection extends StatelessWidget {
                   color: Color(0xFF0F172A),
                 ),
               ),
-              Text(
+              TranslatedText(
                 '$currentXp XP',
                 style: const TextStyle(
                   fontSize: 14,
@@ -409,7 +275,7 @@ class _StatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TranslatedText(
             label,
             style: const TextStyle(
               fontSize: 12,
@@ -560,7 +426,7 @@ class _SkillCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       skill,
                       style: const TextStyle(
                         fontSize: 13,
@@ -568,7 +434,7 @@ class _SkillCard extends StatelessWidget {
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    Text(
+                    TranslatedText(
                       level,
                       style: const TextStyle(
                         fontSize: 11,
@@ -649,7 +515,7 @@ class _ThisWeekSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: ['40', '30', '20', '10', '0']
                       .map(
-                        (v) => Text(
+                        (v) => TranslatedText(
                           v,
                           style: const TextStyle(
                             fontSize: 10,
@@ -698,8 +564,8 @@ class _ThisWeekSection extends StatelessWidget {
                     Row(
                       children: List.generate(dayLabels.length, (i) {
                         return Expanded(
-                          child: Text(
-                            dayLabels[i],
+                          child: TranslatedText(
+                            _days[i],
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 10,
@@ -716,7 +582,7 @@ class _ThisWeekSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Center(
-            child: Text(
+            child: TranslatedText(
               'Minutes practiced per day',
               style: TextStyle(
                 fontSize: 12,
@@ -848,7 +714,7 @@ class _AchievementBadge extends StatelessWidget {
           child: Icon(data.icon, color: iconColor, size: 28),
         ),
         const SizedBox(height: 6),
-        Text(
+        TranslatedText(
           data.label,
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -870,7 +736,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return TranslatedText(
       title,
       style: const TextStyle(
         fontSize: 16,

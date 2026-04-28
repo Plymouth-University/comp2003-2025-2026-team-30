@@ -4,7 +4,8 @@ import 'auth_service.dart';
 import 'login_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
-import 'package:adaptive_english_learning_app/widgets/app_gate.dart';
+import 'package:adaptive_english_learning_app/onboarding_screen.dart';
+import 'package:adaptive_english_learning_app/widgets/translated_text.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -39,7 +40,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const AppGate()),
+        MaterialPageRoute(builder: (_) => const OnBoardingScreen()),
       );
     } on FirebaseAuthException catch (error) {
       if (!mounted) {
@@ -90,7 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                   const SizedBox(height: 30),
 
-                  const Text(
+                  const TranslatedText(
                     "Create Account",
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                   ),

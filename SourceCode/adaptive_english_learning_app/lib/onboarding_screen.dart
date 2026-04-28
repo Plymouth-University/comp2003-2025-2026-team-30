@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'intro_screens/intro_page_2.dart';
 import 'intro_screens/intro_page_3.dart';
-import 'login_page.dart';
+import 'widgets/app_gate.dart';
+import 'widgets/translated_text.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -49,7 +50,7 @@ class _OnboardingScreenState extends State<OnBoardingScreen> {
               onTap: () {
                 _controller.jumpToPage(2);
               },
-              child: Text( "Skip", style: TextStyle(fontSize: 16, color: Colors.grey[700]),)),
+              child: TranslatedText('Skip', style: TextStyle(fontSize: 16, color: Colors.grey[700]))),
 
             // dot indicators
             SmoothPageIndicator(
@@ -64,22 +65,23 @@ class _OnboardingScreenState extends State<OnBoardingScreen> {
             ),
 
             // Next or Done
-            onLastPage ?  
+            onLastPage ?
             GestureDetector(
-              onTap: () { 
-                Navigator.push(context, 
-                MaterialPageRoute(builder: (context) {
-                  return LoginPage();
-                }));
+              onTap: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AppGate()),
+                  (route) => false,
+                );
                },
-              child: Text( "Done", style: TextStyle(fontSize: 16, color: Colors.grey[700]),)
-              ) 
+              child: TranslatedText('Done', style: TextStyle(fontSize: 16, color: Colors.grey[700]))
+              )
               :GestureDetector(
-              onTap: () { 
+              onTap: () {
                 //go to home screen
                 _controller.nextPage(duration: Duration(microseconds: 500), curve: Curves.easeIn);
                }  ,
-              child: Text( "Next", style: TextStyle(fontSize: 16, color: Colors.grey[700]),)
+              child: TranslatedText('Next', style: TextStyle(fontSize: 16, color: Colors.grey[700]))
               ),    
           ],
         )

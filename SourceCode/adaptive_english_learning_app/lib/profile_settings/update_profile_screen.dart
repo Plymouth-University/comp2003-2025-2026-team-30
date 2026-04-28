@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../services/app_language_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   const UpdateProfileScreen({super.key});
@@ -105,12 +106,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Please sign in to update your profile.')),
+        body: Center(
+          child: TranslatedText('Please sign in to update your profile.'),
+        ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Update Profile')),
+      appBar: AppBar(title: const TranslatedText('Update Profile')),
       body: StreamBuilder(
         stream: _userProfileService.watchUserProfile(user.uid),
         builder: (context, snapshot) {
@@ -126,15 +129,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Update the basics.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                const TranslatedText('Update the basics.'),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _displayNameController,
                   decoration: const InputDecoration(
-                    labelText: 'Display name',
+                    label: TranslatedText('Display name'),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -142,14 +142,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _nativeLanguage,
                   decoration: const InputDecoration(
-                    labelText: 'Native language',
+                    label: TranslatedText('Native language'),
                     border: OutlineInputBorder(),
                   ),
                   items: _languages
                       .map(
                         (language) => DropdownMenuItem(
                           value: language,
-                          child: Text(language),
+                          child: TranslatedText(language),
                         ),
                       )
                       .toList(),
@@ -164,7 +164,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : () => _save(user.uid),
-                    child: Text(_isSaving ? 'Saving...' : 'Save changes'),
+                    child: TranslatedText(
+                      _isSaving ? 'Saving...' : 'Save changes',
+                    ),
                   ),
                 ),
               ],

@@ -3,15 +3,12 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
+import 'package:http/http.dart' as http;
 
 import 'ai_tutor_service.dart';
 
 class AppTranslationService {
-  static final AppTranslationService instance =
-      AppTranslationService._internal();
-
   AppTranslationService._internal({
     FirebaseFirestore? firestore,
     http.Client? client,
@@ -21,11 +18,45 @@ class AppTranslationService {
   AppTranslationService({FirebaseFirestore? firestore, http.Client? client})
     : this._internal(firestore: firestore, client: client);
 
+  static final AppTranslationService instance =
+      AppTranslationService._internal();
+
   final FirebaseFirestore _firestore;
   final http.Client _client;
   AiTutorConfig? _cachedConfig;
 
   final Map<String, String> _cache = {};
+  final Map<String, Future<String>> _inFlightTranslations = {};
+  final Set<String> _registeredTexts = <String>{};
+
+  void registerText(String text) {
+    if (text.trim().isEmpty) {
+      return;
+    }
+
+    _registeredTexts.add(text);
+  }
+
+  Future<void> preloadRegisteredTexts(Locale targetLocale) async {
+    if (_registeredTexts.isEmpty || targetLocale.languageCode == 'en') {
+      return;
+    }
+
+    await translateMany(
+      _registeredTexts.toList(growable: false),
+      targetLocale: targetLocale,
+    );
+  }
+
+  /// Returns the cached translation for [text] synchronously, or null if not
+  /// yet cached. Use this for instant UI updates after [preloadRegisteredTexts]
+  /// has already been called (e.g. inside locale-change handlers).
+  String? translateSync(String text, {required Locale targetLocale}) {
+    if (targetLocale.languageCode == 'en') return text;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return text;
+    return _cache[_cacheKey(text, targetLocale)];
+  }
 
   Future<AiTutorConfig> _loadConfig({bool refresh = false}) async {
     if (!refresh && _cachedConfig != null) {
@@ -63,6 +94,32 @@ class AppTranslationService {
       return cached;
     }
 
+    final inFlight = _inFlightTranslations[cacheKey];
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final translationFuture = _translateAndCache(
+      cacheKey: cacheKey,
+      text: text,
+      targetLocale: targetLocale,
+      sourceLanguageCode: sourceLanguageCode,
+    );
+    _inFlightTranslations[cacheKey] = translationFuture;
+
+    try {
+      return await translationFuture;
+    } finally {
+      _inFlightTranslations.remove(cacheKey);
+    }
+  }
+
+  Future<String> _translateAndCache({
+    required String cacheKey,
+    required String text,
+    required Locale targetLocale,
+    required String sourceLanguageCode,
+  }) async {
     var config = await _loadConfig();
     if (config.translationEndpoint == null ||
         config.translationEndpoint!.isEmpty) {
@@ -107,17 +164,15 @@ class AppTranslationService {
       return texts;
     }
 
-    final translated = <String>[];
-    for (final text in texts) {
-      translated.add(
-        await translate(
+    return Future.wait(
+      texts.map(
+        (text) => translate(
           text,
           targetLocale: targetLocale,
           sourceLanguageCode: sourceLanguageCode,
         ),
-      );
-    }
-    return translated;
+      ),
+    );
   }
 
   Future<String?> _translateViaBackend({
