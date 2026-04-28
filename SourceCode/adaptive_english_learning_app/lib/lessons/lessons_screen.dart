@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../services/learning_firestore_service.dart';
 import 'lesson_card.dart';
 import '../widgets/translated_text.dart';
 
@@ -21,13 +25,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "duration": "20 min",
       "progress": 0.0,
       "description": "Master essential vocabulary for dining out",
-
       "learningPoints": [
         "Understand common phrases",
         "Recognize vocabulary in context",
         "Improve listening skills",
       ],
-
       "outline": [
         {
           "title": "Introduction",
@@ -57,13 +59,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "duration": "30 min",
       "progress": 0.0,
       "description": "Prepare for common job interview questions",
-
       "learningPoints": [
         "Practice answering common questions",
         "Improve pronunciation and fluency",
         "Gain confidence in speaking",
       ],
-
       "outline": [
         {
           "title": "Common Questions",
@@ -94,13 +94,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "duration": "25 min",
       "progress": 0.0,
       "description": "Learn essential phrases for traveling abroad",
-
       "learningPoints": [
         "Master key travel phrases",
         "Improve pronunciation for travel situations",
         "Gain confidence in speaking while traveling",
       ],
-
       "outline": [
         {
           "title": "Essential Phrases",
@@ -148,6 +146,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const TranslatedText("Lessons"),
@@ -161,7 +161,6 @@ class _LessonsScreenState extends State<LessonsScreen> {
           ),
         ],
       ),
-
       body: Column(
         children: [
           /// Skill Filter - This will allow users to filter lessons by skill type (Listening, Speaking, etc.)
@@ -181,7 +180,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
           const SizedBox(height: 10),
 
-          /// Difficulty Filter - This will allow users to filter lessons by difficulty level (Beginner, Intermediate, Advanced)
+          /// Difficulty filter chips
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -193,12 +192,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
           const SizedBox(height: 10),
 
-          /// USE FILTERED LIST HERE - This will display the lessons that match the selected filters
+          /// Lesson list — wired to live Firestore progress
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredLessons.length,
-              itemBuilder: (context, index) {
-                final lesson = filteredLessons[index];
+            child: user == null
+                ? _buildList({})
+                : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _learningService.watchUserLessonProgresses(user.uid),
+                    builder: (context, snapshot) {
+                      final progressMap = <String, double>{};
 
                 return LessonCard(lesson: lesson);
               },
@@ -209,9 +210,29 @@ class _LessonsScreenState extends State<LessonsScreen> {
     );
   }
 
+  Widget _buildList(Map<String, double> progressMap) {
+    final filtered = _lessons.where((lesson) {
+      final matchesSkill =
+          selectedSkill == "All" || lesson["skill"] == selectedSkill;
+      final matchesDifficulty = lesson["difficulty"] == selectedDifficulty;
+      return matchesSkill && matchesDifficulty;
+    }).map((lesson) {
+      final lessonId = _learningService.lessonDocIdFor(lesson);
+      return {...lesson, 'progress': progressMap[lessonId] ?? 0.0};
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return const Center(child: Text("No lessons available for this filter."));
+    }
+
+    return ListView.builder(
+      itemCount: filtered.length,
+      itemBuilder: (context, index) => LessonCard(lesson: filtered[index]),
+    );
+  }
+
   Widget skillChip(String label) {
     final selected = selectedSkill == label;
-
     final theme = skillThemes[label];
 
     return Padding(
