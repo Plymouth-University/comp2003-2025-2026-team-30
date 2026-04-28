@@ -16,6 +16,7 @@ class LessonsScreen extends StatefulWidget {
 class _LessonsScreenState extends State<LessonsScreen> {
   String selectedSkill = "All";
   String selectedDifficulty = "Beginner";
+  final _learningService = LearningFirestoreService();
 
   final List<Map<String, dynamic>> lessons = [
     {
@@ -200,10 +201,19 @@ class _LessonsScreenState extends State<LessonsScreen> {
                     stream: _learningService.watchUserLessonProgresses(user.uid),
                     builder: (context, snapshot) {
                       final progressMap = <String, double>{};
-
-                return LessonCard(lesson: lesson);
-              },
-            ),
+                      if (snapshot.hasData) {
+                        for (final doc in snapshot.data!.docs) {
+                          final data = doc.data();
+                          final completed =
+                              (data['completedSections'] as num?)?.toInt() ?? 0;
+                          final total =
+                              (data['totalSections'] as num?)?.toInt() ?? 1;
+                          progressMap[doc.id] = completed / total;
+                        }
+                      }
+                      return _buildList(progressMap);
+                    },
+                  ),
           ),
         ],
       ),
@@ -211,7 +221,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   Widget _buildList(Map<String, double> progressMap) {
-    final filtered = _lessons.where((lesson) {
+    final filtered = lessons.where((lesson) {
       final matchesSkill =
           selectedSkill == "All" || lesson["skill"] == selectedSkill;
       final matchesDifficulty = lesson["difficulty"] == selectedDifficulty;
