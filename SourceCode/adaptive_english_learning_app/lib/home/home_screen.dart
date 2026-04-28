@@ -241,9 +241,15 @@ class _ProgressStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeValue = totalMinutes < 60
-        ? '${totalMinutes}m'
-        : '${(totalMinutes / 60).toStringAsFixed(1)}h';
+    // ✅ Clean time formatting
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+
+    final timeValue = hours == 0
+        ? '${minutes}m'
+        : minutes == 0
+            ? '${hours}h'
+            : '${hours}h ${minutes}m';
 
     return Row(
       children: [
