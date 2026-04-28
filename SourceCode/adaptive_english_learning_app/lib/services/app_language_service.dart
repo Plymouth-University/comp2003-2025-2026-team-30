@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_translation_service.dart';
+
 class AppLanguageService {
   AppLanguageService._();
 
@@ -15,7 +17,15 @@ class AppLanguageService {
     final prefs = await SharedPreferences.getInstance();
     final storedCode = prefs.getString(_localeCodeKey);
     if (storedCode != null && storedCode.isNotEmpty) {
-      localeNotifier.value = localeFromCode(storedCode);
+      final locale = localeFromCode(storedCode);
+      localeNotifier.value = locale;
+
+      // After the first frame, all visible TranslatedText widgets have called
+      // registerText(). Run a batch preload so that subsequent screen
+      // navigations get synchronous cache hits instead of per-string fetches.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppTranslationService.instance.preloadRegisteredTexts(locale);
+      });
     }
   }
 
@@ -26,14 +36,15 @@ class AppLanguageService {
   }
 
   Future<void> setLocale(Locale? locale) async {
-    localeNotifier.value = locale;
-
     final prefs = await SharedPreferences.getInstance();
     if (locale == null) {
+      localeNotifier.value = null;
       await prefs.remove(_localeCodeKey);
       return;
     }
 
+    await AppTranslationService.instance.preloadRegisteredTexts(locale);
+    localeNotifier.value = locale;
     await prefs.setString(_localeCodeKey, locale.languageCode);
   }
 

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class ProgressScreen extends StatelessWidget {
   ProgressScreen({super.key});
@@ -13,8 +14,8 @@ class ProgressScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view progress.')),
+      return Scaffold(
+        body: Center(child: TranslatedText('Please sign in to view progress.')),
       );
     }
 
@@ -76,7 +77,7 @@ class _ScreenHeader extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TranslatedText(
           'Your Progress',
           style: TextStyle(
             fontSize: 22,
@@ -157,7 +158,7 @@ class _OverviewSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              TranslatedText(
                 'Level $currentLevel',
                 style: const TextStyle(
                   fontSize: 16,
@@ -165,7 +166,7 @@ class _OverviewSection extends StatelessWidget {
                   color: Color(0xFF0F172A),
                 ),
               ),
-              Text(
+              TranslatedText(
                 '$currentXp XP',
                 style: const TextStyle(
                   fontSize: 14,
@@ -226,7 +227,7 @@ class _StatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TranslatedText(
             label,
             style: const TextStyle(
               fontSize: 12,
@@ -338,7 +339,7 @@ class _SkillCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       skill,
                       style: const TextStyle(
                         fontSize: 13,
@@ -346,7 +347,7 @@ class _SkillCard extends StatelessWidget {
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    Text(
+                    TranslatedText(
                       level,
                       style: const TextStyle(
                         fontSize: 11,
@@ -425,7 +426,7 @@ class _ThisWeekSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: ['40', '30', '20', '10', '0']
                       .map(
-                        (v) => Text(
+                        (v) => TranslatedText(
                           v,
                           style: const TextStyle(
                             fontSize: 10,
@@ -472,7 +473,7 @@ class _ThisWeekSection extends StatelessWidget {
                     Row(
                       children: List.generate(_days.length, (i) {
                         return Expanded(
-                          child: Text(
+                          child: TranslatedText(
                             _days[i],
                             textAlign: TextAlign.center,
                             style: const TextStyle(
@@ -490,7 +491,7 @@ class _ThisWeekSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Center(
-            child: Text(
+            child: TranslatedText(
               'Minutes practiced per day',
               style: TextStyle(
                 fontSize: 12,
@@ -621,7 +622,7 @@ class _AchievementBadge extends StatelessWidget {
           child: Icon(data.icon, color: iconColor, size: 28),
         ),
         const SizedBox(height: 6),
-        Text(
+        TranslatedText(
           data.label,
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -643,7 +644,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return TranslatedText(
       title,
       style: const TextStyle(
         fontSize: 16,

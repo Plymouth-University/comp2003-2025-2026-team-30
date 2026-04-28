@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'translated_text.dart';
+
 /// ===========================
 /// TOP LOGIN / SIGNUP TOGGLE
 /// ===========================
@@ -25,7 +27,7 @@ Widget topToggle({
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(
+                child: TranslatedText(
                   "Login",
                   style: TextStyle(
                     color: isLogin ? Colors.white : Colors.black,
@@ -45,7 +47,7 @@ Widget topToggle({
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(
+                child: TranslatedText(
                   "Sign Up",
                   style: TextStyle(
                     color: !isLogin ? Colors.white : Colors.black,
@@ -73,7 +75,7 @@ Widget inputField({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label),
+      TranslatedText(label),
       const SizedBox(height: 6),
       TextField(
         controller: controller,
@@ -81,9 +83,7 @@ Widget inputField({
         decoration: InputDecoration(
           prefixIcon: Icon(icon),
           hintText: hint,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     ],
@@ -93,10 +93,7 @@ Widget inputField({
 /// ===========================
 /// PRIMARY BUTTON
 /// ===========================
-Widget primaryButton(
-  String text, {
-  required VoidCallback onPressed,
-}) {
+Widget primaryButton(String text, {required VoidCallback onPressed}) {
   return SizedBox(
     width: double.infinity,
     height: 50,
@@ -104,15 +101,12 @@ Widget primaryButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 16)),
+      child: TranslatedText(text, style: const TextStyle(fontSize: 16)),
     ),
   );
 }
-
 
 Widget divider() {
   return Row(
@@ -120,7 +114,7 @@ Widget divider() {
       Expanded(child: Divider()),
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 8),
-        child: Text("Or continue with"),
+        child: TranslatedText("Or continue with"),
       ),
       Expanded(child: Divider()),
     ],
@@ -134,7 +128,7 @@ Widget socialButtons() {
         child: OutlinedButton.icon(
           onPressed: () {},
           icon: const Icon(Icons.g_mobiledata),
-          label: const Text("Google"),
+          label: const TranslatedText("Google"),
         ),
       ),
       const SizedBox(width: 10),
@@ -142,7 +136,7 @@ Widget socialButtons() {
         child: OutlinedButton.icon(
           onPressed: () {},
           icon: const Icon(Icons.code),
-          label: const Text("GitHub"),
+          label: const TranslatedText("GitHub"),
         ),
       ),
     ],
@@ -157,8 +151,8 @@ Widget bottomText({
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      Text(text),
-      TextButton(onPressed: onTap, child: Text(action)),
+      TranslatedText(text),
+      TextButton(onPressed: onTap, child: TranslatedText(action)),
     ],
   );
 }

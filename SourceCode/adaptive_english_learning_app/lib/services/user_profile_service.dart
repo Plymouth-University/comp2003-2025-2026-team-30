@@ -33,6 +33,8 @@ class UserProfileService {
       'proficiencyLevel': null,
       'learningGoal': null,
       'learningStyle': null,
+      'streakRemindersEnabled': false,
+      'lessonRemindersEnabled': false,
       'currentXp': 0,
       'currentLevel': 1,
       'streakDays': 0,
@@ -45,13 +47,29 @@ class UserProfileService {
   }
 
   Future<void> ensureUserProfile(User user) {
-    return _users.doc(user.uid).set({
-      'email': user.email,
-      'displayName': user.displayName,
-      'photoUrl': user.photoURL,
-      'lastSeenAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    final userRef = _users.doc(user.uid);
+
+    return userRef.get().then((snapshot) {
+      if (!snapshot.exists) {
+        return userRef.set({
+          'email': user.email,
+          'displayName': user.displayName,
+          'photoUrl': user.photoURL,
+          'onboardingCompleted': true,
+          'preferredLocaleCode': 'en',
+          'lastSeenAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return userRef.set({
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoUrl': user.photoURL,
+        'lastSeenAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
   }
 
   Future<void> saveOnboardingProfile({
@@ -92,6 +110,21 @@ class UserProfileService {
       if (proficiencyLevel != null) 'proficiencyLevel': proficiencyLevel,
       if (learningGoal != null) 'learningGoal': learningGoal,
       if (learningStyle != null) 'learningStyle': learningStyle,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateNotificationSettings({
+    required String uid,
+    bool? streakRemindersEnabled,
+    bool? lessonRemindersEnabled,
+  }) {
+    return _users.doc(uid).set({
+      if (streakRemindersEnabled != null)
+        'streakRemindersEnabled': streakRemindersEnabled,
+      if (lessonRemindersEnabled != null)
+        'lessonRemindersEnabled': lessonRemindersEnabled,
       'updatedAt': FieldValue.serverTimestamp(),
       'lastSeenAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

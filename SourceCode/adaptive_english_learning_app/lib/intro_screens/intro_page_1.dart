@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/translated_text.dart';
+
 class IntroPage1 extends StatelessWidget {
   const IntroPage1({super.key});
 
@@ -13,7 +15,7 @@ class IntroPage1 extends StatelessWidget {
         children: [
           Icon(Icons.language, size: 80, color: Colors.white),
           const SizedBox(height: 30),
-          Text(
+          const TranslatedText(
             'Adaptive English Learning',
             style: TextStyle(
               color: Colors.white,
@@ -23,7 +25,7 @@ class IntroPage1 extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Text(
+          const TranslatedText(
             'Personalized learning powered by AI. Our adaptive system adjusts to your learning style, pace, and goals.',
             style: TextStyle(
               color: Colors.white70,

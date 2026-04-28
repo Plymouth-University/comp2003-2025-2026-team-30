@@ -5,6 +5,7 @@ import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 
 import '../services/app_language_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class LanguageRegionScreen extends StatefulWidget {
   const LanguageRegionScreen({super.key});
@@ -209,13 +210,15 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
     if (user == null) {
       return const Scaffold(
         body: Center(
-          child: Text('Please sign in to update language and region.'),
+          child: TranslatedText(
+            'Please sign in to update language and region.',
+          ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Language & Region')),
+      appBar: AppBar(title: const TranslatedText('Language & Region')),
       body: StreamBuilder(
         stream: _userProfileService.watchUserProfile(user.uid),
         builder: (context, snapshot) {
@@ -231,9 +234,8 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const TranslatedText(
                   'Use ML to suggest your language, then pick the region that fits you best.',
-                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -241,8 +243,10 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
                   minLines: 3,
                   maxLines: 5,
                   decoration: const InputDecoration(
-                    labelText: 'Sample text for language detection',
-                    hintText: 'Type a few words or a short sentence...',
+                    label: TranslatedText('Sample text for language detection'),
+                    hint: TranslatedText(
+                      'Type a few words or a short sentence...',
+                    ),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -252,7 +256,7 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _isDetecting ? null : _detectLanguage,
-                        child: Text(
+                        child: TranslatedText(
                           _isDetecting ? 'Detecting...' : 'Detect language',
                         ),
                       ),
@@ -274,14 +278,14 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _nativeLanguage,
                   decoration: const InputDecoration(
-                    labelText: 'Native language',
+                    label: TranslatedText('Native language'),
                     border: OutlineInputBorder(),
                   ),
                   items: _languageOptions
                       .map(
                         (language) => DropdownMenuItem(
                           value: language,
-                          child: Text(language),
+                          child: TranslatedText(language),
                         ),
                       )
                       .toList(),
@@ -295,14 +299,14 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _region,
                   decoration: const InputDecoration(
-                    labelText: 'Region',
+                    label: TranslatedText('Region'),
                     border: OutlineInputBorder(),
                   ),
                   items: _regionOptions
                       .map(
                         (region) => DropdownMenuItem(
                           value: region,
-                          child: Text(region),
+                          child: TranslatedText(region),
                         ),
                       )
                       .toList(),
@@ -317,7 +321,7 @@ class _LanguageRegionScreenState extends State<LanguageRegionScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : () => _save(user.uid),
-                    child: Text(
+                    child: TranslatedText(
                       _isSaving ? 'Saving...' : 'Save language & region',
                     ),
                   ),

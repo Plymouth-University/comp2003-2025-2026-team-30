@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/learning_firestore_service.dart';
+import '../widgets/translated_text.dart';
 
 class LessonSectionScreen extends StatelessWidget {
   final Map<String, dynamic> lesson;
@@ -46,7 +47,10 @@ class LessonSectionScreen extends StatelessWidget {
     final color = skillColors[lesson["skill"]] ?? Colors.grey;
 
     return Scaffold(
-      appBar: AppBar(title: Text(section["title"]), backgroundColor: color),
+      appBar: AppBar(
+        title: TranslatedText(section["title"]),
+        backgroundColor: color,
+      ),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -62,7 +66,7 @@ class LessonSectionScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            Text(
+            TranslatedText(
               "Section ${currentIndex + 1} of ${outline.length}",
               style: TextStyle(color: Colors.grey[600]),
             ),
@@ -70,7 +74,7 @@ class LessonSectionScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             /// TITLE
-            Text(
+            TranslatedText(
               section["title"],
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
@@ -102,7 +106,7 @@ class LessonSectionScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text("Previous"),
+                    child: const TranslatedText("Previous"),
                   )
                 else
                   const SizedBox(),
@@ -129,7 +133,7 @@ class LessonSectionScreen extends StatelessWidget {
                       Navigator.pop(context);
                     }
                   },
-                  child: Text(
+                  child: TranslatedText(
                     currentIndex < outline.length - 1 ? "Next" : "Finish",
                   ),
                 ),
@@ -159,7 +163,7 @@ class LessonSectionScreen extends StatelessWidget {
         return buildWriting(section);
 
       default:
-        return Text(section["description"] ?? "");
+        return TranslatedText(section["description"] ?? "");
     }
   }
 
@@ -170,7 +174,7 @@ class LessonSectionScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        const TranslatedText(
           "Listen Carefully",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -192,7 +196,7 @@ class LessonSectionScreen extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.play_arrow),
-                label: const Text("Play Audio"),
+                label: const TranslatedText("Play Audio"),
                 style: ElevatedButton.styleFrom(backgroundColor: color),
               ),
             ],
@@ -201,13 +205,13 @@ class LessonSectionScreen extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        Text(section["description"] ?? ""),
+        TranslatedText(section["description"] ?? ""),
 
         const SizedBox(height: 15),
 
         const TextField(
           decoration: InputDecoration(
-            hintText: "Type what you heard...",
+            hint: TranslatedText("Type what you heard..."),
             border: OutlineInputBorder(),
           ),
         ),
@@ -222,7 +226,7 @@ class LessonSectionScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        const TranslatedText(
           "Practice Speaking",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -235,7 +239,7 @@ class LessonSectionScreen extends StatelessWidget {
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
+          child: TranslatedText(
             section["description"] ?? "Say the sentence clearly",
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
@@ -252,7 +256,7 @@ class LessonSectionScreen extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text("Tap to record"),
+        const TranslatedText("Tap to record"),
       ],
     );
   }
@@ -264,7 +268,7 @@ class LessonSectionScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Reading Task",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -279,19 +283,19 @@ class LessonSectionScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: SingleChildScrollView(
-            child: Text(section["description"] ?? ""),
+            child: TranslatedText(section["description"] ?? ""),
           ),
         ),
 
         const SizedBox(height: 20),
 
-        const Text("Answer the question:"),
+        const TranslatedText("Answer the question:"),
 
         const SizedBox(height: 10),
 
         const TextField(
           decoration: InputDecoration(
-            hintText: "Your answer...",
+            hint: TranslatedText("Your answer..."),
             border: OutlineInputBorder(),
           ),
         ),
@@ -304,21 +308,21 @@ class LessonSectionScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Writing Task",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 20),
 
-        Text(section["description"] ?? ""),
+        TranslatedText(section["description"] ?? ""),
 
         const SizedBox(height: 10),
 
         const TextField(
           maxLines: 6,
           decoration: InputDecoration(
-            hintText: "Write your response...",
+            hint: TranslatedText("Write your response..."),
             border: OutlineInputBorder(),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'lesson_card.dart';
+import '../widgets/translated_text.dart';
 
 class LessonsScreen extends StatefulWidget {
   const LessonsScreen({super.key});
@@ -13,7 +14,6 @@ class _LessonsScreenState extends State<LessonsScreen> {
   String selectedDifficulty = "Beginner";
 
   final List<Map<String, dynamic>> lessons = [
-    
     {
       "title": "At the Restaurant",
       "skill": "Listening",
@@ -25,7 +25,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "learningPoints": [
         "Understand common phrases",
         "Recognize vocabulary in context",
-        "Improve listening skills"
+        "Improve listening skills",
       ],
 
       "outline": [
@@ -33,21 +33,22 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Introduction",
           "type": "Audio",
           "time": "2 min",
-          "description": "Get an overview of the lesson and what you will learn"
+          "description":
+              "Get an overview of the lesson and what you will learn",
         },
         {
           "title": "Vocabulary",
           "type": "Audio",
           "time": "5 min",
-          "description": "Learn essential words and phrases with examples"
+          "description": "Learn essential words and phrases with examples",
         },
         {
           "title": "Quick Quiz",
           "type": "Quiz",
           "time": "3 min",
-          "description": "Test your understanding with a short quiz"
-        }
-      ]
+          "description": "Test your understanding with a short quiz",
+        },
+      ],
     },
     {
       "title": "Job Interview Prep",
@@ -60,7 +61,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "learningPoints": [
         "Practice answering common questions",
         "Improve pronunciation and fluency",
-        "Gain confidence in speaking"
+        "Gain confidence in speaking",
       ],
 
       "outline": [
@@ -68,21 +69,23 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Common Questions",
           "type": "Audio",
           "time": "10 min",
-          "description": "Learn how to answer frequently asked interview questions"
+          "description":
+              "Learn how to answer frequently asked interview questions",
         },
         {
           "title": "Role Play",
           "type": "Audio",
           "time": "15 min",
-          "description": "Practice with a simulated interview scenario"
+          "description": "Practice with a simulated interview scenario",
         },
         {
           "title": "Feedback & Tips",
           "type": "Audio",
           "time": "5 min",
-          "description": "Get feedback on your performance and tips for improvement"
-        }
-      ]
+          "description":
+              "Get feedback on your performance and tips for improvement",
+        },
+      ],
     },
     {
       "title": "Travel Phrases",
@@ -95,7 +98,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
       "learningPoints": [
         "Master key travel phrases",
         "Improve pronunciation for travel situations",
-        "Gain confidence in speaking while traveling"
+        "Gain confidence in speaking while traveling",
       ],
 
       "outline": [
@@ -103,21 +106,24 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Essential Phrases",
           "type": "Audio",
           "time": "10 min",
-          "description": "Learn important phrases for airports, hotels, and transportation"
+          "description":
+              "Learn important phrases for airports, hotels, and transportation",
         },
         {
           "title": "Pronunciation Practice",
           "type": "Audio",
           "time": "10 min",
-          "description": "Practice saying the phrases with correct pronunciation"
+          "description":
+              "Practice saying the phrases with correct pronunciation",
         },
         {
           "title": "Real-Life Scenarios",
           "type": "Audio",
           "time": "5 min",
-          "description": "Apply what you've learned in simulated travel situations"
-        }
-      ]
+          "description":
+              "Apply what you've learned in simulated travel situations",
+        },
+      ],
     },
   ];
 
@@ -127,36 +133,24 @@ class _LessonsScreenState extends State<LessonsScreen> {
       final matchesSkill =
           selectedSkill == "All" || lesson["skill"] == selectedSkill;
 
-      final matchesDifficulty =
-          lesson["difficulty"] == selectedDifficulty;
+      final matchesDifficulty = lesson["difficulty"] == selectedDifficulty;
 
       return matchesSkill && matchesDifficulty;
     }).toList();
   }
+
   final Map<String, Map<String, dynamic>> skillThemes = {
-    "Listening": {
-      "color": Colors.green,
-      "icon": Icons.headphones,
-    },
-    "Speaking": {
-      "color": Colors.orange,
-      "icon": Icons.mic,
-    },
-    "Reading": {
-      "color": Colors.blue,
-      "icon": Icons.menu_book,
-    },
-    "Writing": {
-      "color": Colors.purple,
-      "icon": Icons.edit,
-    },
+    "Listening": {"color": Colors.green, "icon": Icons.headphones},
+    "Speaking": {"color": Colors.orange, "icon": Icons.mic},
+    "Reading": {"color": Colors.blue, "icon": Icons.menu_book},
+    "Writing": {"color": Colors.purple, "icon": Icons.edit},
   };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Lessons"),
+        title: const TranslatedText("Lessons"),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -164,13 +158,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
           Padding(
             padding: EdgeInsets.only(right: 15),
             child: Icon(Icons.search),
-          )
+          ),
         ],
       ),
 
       body: Column(
         children: [
-
           /// Skill Filter - This will allow users to filter lessons by skill type (Listening, Speaking, etc.)
           SizedBox(
             height: 60,
@@ -207,12 +200,10 @@ class _LessonsScreenState extends State<LessonsScreen> {
               itemBuilder: (context, index) {
                 final lesson = filteredLessons[index];
 
-                return LessonCard(
-                  lesson: lesson,
-                );
+                return LessonCard(lesson: lesson);
               },
             ),
-          )
+          ),
         ],
       ),
     );
@@ -233,13 +224,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 color: selected ? Colors.white : theme?["color"],
               )
             : null,
-        label: Text(label),
+        label: TranslatedText(label),
         selected: selected,
         selectedColor: theme?["color"] ?? Colors.grey,
         backgroundColor: Colors.grey[200],
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-        ),
+        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black),
         onSelected: (_) {
           setState(() {
             selectedSkill = label;
@@ -255,13 +244,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Text(label),
+        label: TranslatedText(label),
         selected: selected,
         selectedColor: Colors.black,
         backgroundColor: Colors.grey[200],
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-        ),
+        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black),
         onSelected: (_) {
           setState(() {
             selectedDifficulty = label;

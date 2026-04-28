@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../onboarding_screen.dart';
+import '../login_page.dart';
 import '../services/app_language_service.dart';
 import '../services/user_profile_service.dart';
 import 'main_navigation.dart';
@@ -53,7 +53,7 @@ class _AppGateState extends State<AppGate> {
 
         final user = authSnapshot.data;
         if (user == null) {
-          return const OnBoardingScreen();
+          return const LoginPage();
         }
 
         return FutureBuilder<void>(
