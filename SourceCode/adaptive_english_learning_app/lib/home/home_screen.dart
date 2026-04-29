@@ -62,7 +62,6 @@ class HomeScreen extends StatelessWidget {
                   _TopHeader(
                     greeting: 'Good Day',
                     name: displayName,
-                    streakDays: streakDays,
                   ),
                   const SizedBox(height: 16),
                   _DailyGoalCard(
@@ -81,7 +80,11 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   const _SectionTitle(title: 'Achievements'),
                   const SizedBox(height: 10),
-                  _AchievementsRow(achievements: achievements),
+                  _AchievementsRow(
+                    achievements: achievements,
+                    lessons: lessons,
+                    streakDays: streakDays,
+                  ),
                 ],
               ),
             );
@@ -95,12 +98,10 @@ class HomeScreen extends StatelessWidget {
 class _TopHeader extends StatelessWidget {
   final String greeting;
   final String name;
-  final int streakDays;
 
   const _TopHeader({
     required this.greeting,
     required this.name,
-    required this.streakDays,
   });
 
   @override
@@ -112,61 +113,21 @@ class _TopHeader extends StatelessWidget {
       fontWeight: FontWeight.w700,
     );
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TranslatedText(greeting, style: headingStyle),
-              Row(
-                children: [
-                  Text('$name! ', style: headingStyle),
-                  const Icon(
-                    Icons.wb_sunny_rounded,
-                    size: 20,
-                    color: Color(0xFFF59E0B),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-    
-      ],
-    );
-  }
-}
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEDD5),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.local_fire_department_rounded,
-            size: 18,
-            color: Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          TranslatedText(
-            '$days days',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF9A3412),
+        TranslatedText(greeting, style: headingStyle),
+        Row(
+          children: [
+            Text('$name! ', style: headingStyle),
+            const Icon(
+              Icons.wb_sunny_rounded,
+              size: 20,
+              color: Color(0xFFF59E0B),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -357,8 +318,14 @@ class _StatCard extends StatelessWidget {
 
 class _AchievementsRow extends StatelessWidget {
   final Map<String, dynamic> achievements;
+  final int lessons;
+  final int streakDays;
 
-  const _AchievementsRow({required this.achievements});
+  const _AchievementsRow({
+    required this.achievements,
+    required this.lessons,
+    required this.streakDays,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -367,24 +334,26 @@ class _AchievementsRow extends StatelessWidget {
         icon: Icons.school_rounded,
         label: 'First Lesson',
         color: const Color(0xFF2F80ED),
-        unlocked: achievements['firstLesson'] == true,
+        // Unlocked when 1+ lesson completed, regardless of Firestore map state
+        unlocked: achievements['firstLesson'] == true || lessons >= 1,
       ),
       _Achievement(
         icon: Icons.local_fire_department_rounded,
         label: '7 Day Streak',
         color: const Color(0xFFF97316),
-        unlocked: achievements['sevenDayStreak'] == true,
+        unlocked: achievements['sevenDayStreak'] == true || streakDays >= 7,
       ),
       _Achievement(
         icon: Icons.star_rounded,
         label: '10 Lessons',
         color: const Color(0xFFFACC15),
-        unlocked: achievements['tenLessons'] == true,
+        unlocked: achievements['tenLessons'] == true || lessons >= 10,
       ),
       _Achievement(
         icon: Icons.mic_rounded,
         label: 'Speaking Star',
         color: const Color(0xFFF59E0B),
+        // Speaking star requires a speaking practice — Firestore is the only source
         unlocked: achievements['speakingStar'] == true,
       ),
     ];

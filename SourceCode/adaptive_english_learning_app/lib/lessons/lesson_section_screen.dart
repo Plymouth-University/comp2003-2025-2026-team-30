@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/ai_tutor_service.dart';
 import '../services/learning_firestore_service.dart';
+import '../services/speech_recognition_service.dart';
 import '../widgets/translated_text.dart';
 
 class LessonSectionScreen extends StatefulWidget {
@@ -189,7 +190,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
             const SizedBox(height: 8),
 
             TranslatedText(
-              "Section ${currentIndex + 1} of ${outline.length}",
+              "Section ${widget.currentIndex + 1} of ${outline.length}",
               style: TextStyle(color: Colors.grey[600]),
             ),
 
@@ -253,7 +254,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
                     }
                   },
                   child: TranslatedText(
-                    currentIndex < outline.length - 1 ? "Next" : "Finish",
+                    widget.currentIndex < outline.length - 1 ? "Next" : "Finish",
                   ),
                 ),
               ],

@@ -6,33 +6,6 @@ import '../services/user_profile_service.dart';
 import '../widgets/translated_text.dart';
 
 
-// Data model
-
-
-class _ProgressData {
-  final int completedLessonsCount;
-  final double hours;
-  final int streakDays;
-  final int currentXp;
-  final int currentLevel;
-  final Map<String, double> skillPercents;
-  final List<double> weeklyMinutes;
-  final List<String> weekDayLabels;
-
-  const _ProgressData({
-    required this.completedLessonsCount,
-    required this.hours,
-    required this.streakDays,
-    required this.currentXp,
-    required this.currentLevel,
-    required this.skillPercents,
-    required this.weeklyMinutes,
-    required this.weekDayLabels,
-  });
-}
-
-
-
 
 // TODO: refine these thresholds with the team once more lessons are added.
 String _levelLabel(double percent) {
@@ -56,59 +29,165 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  bool _loading = true;
-  String? _error;
-  _ProgressData? _data;
+  final _userProfileService = UserProfileService();
+
+  // Subcollection data — fetched once and refreshed when uid changes
+  Map<String, double> _skillPercents = const {};
+  List<double> _weeklyMinutes = const [0, 0, 0, 0, 0, 0, 0];
+  List<String> _weekDayLabels = const [
+    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+  ];
+  String? _fetchedUid;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _fetchSubcollectionData();
   }
 
-  Future<void> _loadData() async {
+  static String _shortDayLabel(DateTime d) {
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return labels[d.weekday - 1];
+  }
+
+  Future<void> _fetchSubcollectionData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    if (_fetchedUid == user.uid) return;
+    _fetchedUid = user.uid;
+
+    try {
+      final today = DateTime.now();
+      final weekDates = List.generate(
+        7,
+        (i) => today.subtract(Duration(days: 6 - i)),
+      );
+      final weekKeys = weekDates.map(_dateKey).toList();
+
+      final results = await Future.wait<QuerySnapshot<Map<String, dynamic>>>([
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('dailyStats')
+            .where(FieldPath.documentId, whereIn: weekKeys)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('lessonProgress')
+            .get(),
+      ]);
+
+      final dailySnap = results[0];
+      final progressSnap = results[1];
+
+      // Weekly minutes chart
+      final statsMap = <String, int>{
+        for (final doc in dailySnap.docs)
+          doc.id:
+              (doc.data()['activitiesCompleted'] as num?)?.toInt() ?? 0,
+      };
+      final weeklyMinutes =
+          weekDates.map((d) => (statsMap[_dateKey(d)] ?? 0) * 5.0).toList();
+
+      // Skill percentages from completed lesson progress
+      final skillCounts = <String, int>{};
+      for (final doc in progressSnap.docs) {
+        final skill = (doc.data()['skill'] as String?) ?? '';
+        if (skill.isNotEmpty) {
+          skillCounts[skill] = (skillCounts[skill] ?? 0) + 1;
+        }
+      }
+      final maxCount =
+          skillCounts.values.fold(1, (a, b) => a > b ? a : b);
+
+      if (!mounted) return;
+      setState(() {
+        _weeklyMinutes = weeklyMinutes;
+        _weekDayLabels = weekDates.map(_shortDayLabel).toList();
+        _skillPercents = {
+          'Listening':
+              (skillCounts['Listening'] ?? 0) / maxCount.toDouble(),
+          'Speaking':
+              (skillCounts['Speaking'] ?? 0) / maxCount.toDouble(),
+          'Reading':
+              (skillCounts['Reading'] ?? 0) / maxCount.toDouble(),
+          'Writing':
+              (skillCounts['Writing'] ?? 0) / maxCount.toDouble(),
+        };
+      });
+    } catch (_) {
+      // Subcollection fetch failure is non-fatal; profile data still renders
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return Scaffold(
-        body: Center(child: TranslatedText('Please sign in to view progress.')),
+      return const Scaffold(
+        body: Center(
+          child: TranslatedText('Please sign in to view progress.'),
+        ),
       );
     }
 
-    final d = _data!;
+    return StreamBuilder(
+      stream: _userProfileService.watchUserProfile(user.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _ScreenHeader(),
-              const SizedBox(height: 20),
-              _OverviewSection(
-                lessons: d.completedLessonsCount,
-                hours: d.hours,
-                streak: d.streakDays,
-                currentXp: d.currentXp,
-                currentLevel: d.currentLevel,
+        final data = snapshot.data?.data() ?? <String, dynamic>{};
+
+        final lessons =
+            (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
+        final totalMinutes =
+            (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+        final hours = totalMinutes / 60.0;
+        final streakDays = (data['streakDays'] as num?)?.toInt() ?? 0;
+        final currentXp = (data['currentXp'] as num?)?.toInt() ?? 0;
+        final currentLevel =
+            (data['currentLevel'] as num?)?.toInt() ?? 1;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF6F7FB),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _ScreenHeader(),
+                  const SizedBox(height: 20),
+                  _OverviewSection(
+                    lessons: lessons,
+                    hours: hours,
+                    streak: streakDays,
+                    currentXp: currentXp,
+                    currentLevel: currentLevel,
+                  ),
+                  const SizedBox(height: 24),
+                  _SkillsSection(skillPercents: _skillPercents),
+                  const SizedBox(height: 24),
+                  _ThisWeekSection(
+                    weeklyMinutes: _weeklyMinutes,
+                    dayLabels: _weekDayLabels,
+                  ),
+                  const SizedBox(height: 24),
+                  _AchievementsSection(
+                    lessons: lessons,
+                    streak: streakDays,
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              _SkillsSection(skillPercents: d.skillPercents),
-              const SizedBox(height: 24),
-              _ThisWeekSection(
-                weeklyMinutes: d.weeklyMinutes,
-                dayLabels: d.weekDayLabels,
-              ),
-              const SizedBox(height: 24),
-              _AchievementsSection(
-                lessons: d.completedLessonsCount,
-                streak: d.streakDays,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -303,9 +382,9 @@ class _SkillsSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        _SectionTitle(title: 'Skills'),
-        SizedBox(height: 12),
+      children: [
+        const _SectionTitle(title: 'Skills'),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -565,7 +644,7 @@ class _ThisWeekSection extends StatelessWidget {
                       children: List.generate(dayLabels.length, (i) {
                         return Expanded(
                           child: TranslatedText(
-                            _days[i],
+                            dayLabels[i],
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 10,
