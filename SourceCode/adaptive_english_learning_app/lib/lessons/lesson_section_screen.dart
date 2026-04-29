@@ -284,48 +284,60 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
   // LISTENING
   // ---------------------------------------------------------------------------
   Widget _buildListening(Map<String, dynamic> section, Color color) {
-    final prompt = section["description"] as String? ?? '';
+    final description = section["description"] as String? ?? '';
+    final content = section["content"] as String? ?? '';
+    final aiPrompt = content.isNotEmpty ? content : description;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const TranslatedText(
           "Listen Carefully",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
+        /// Transcript / content box
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            children: [
-              const Icon(Icons.graphic_eq, size: 60),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.play_arrow),
-                label: const TranslatedText("Play Audio"),
-                style: ElevatedButton.styleFrom(backgroundColor: color),
-              ),
-            ],
-          ),
+          child: content.isNotEmpty
+              ? Text(content, style: const TextStyle(fontSize: 15, height: 1.6))
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.graphic_eq, size: 50),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.play_arrow),
+                      label: const TranslatedText("Play Audio"),
+                      style: ElevatedButton.styleFrom(backgroundColor: color),
+                    ),
+                  ],
+                ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        TranslatedText(section["description"] ?? ""),
+        TranslatedText(
+          description,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
 
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
 
-        const TextField(
-          decoration: InputDecoration(
-            hint: TranslatedText("Type what you heard..."),
+        TextField(
+          controller: _controller,
+          minLines: 2,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: "Type your answer...",
             border: OutlineInputBorder(),
           ),
         ),
@@ -337,7 +349,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           color: color,
           onPressed: () => _submitTextForFeedback(
             activityType: 'listening',
-            prompt: prompt,
+            prompt: aiPrompt,
           ),
         ),
 
@@ -350,7 +362,8 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
   // SPEAKING
   // ---------------------------------------------------------------------------
   Widget _buildSpeaking(Map<String, dynamic> section, Color color) {
-    final prompt = section["description"] as String? ?? '';
+    final description = section["description"] as String? ?? '';
+    final content = section["content"] as String? ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -360,26 +373,46 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
+        /// Context / instruction box
+        if (content.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              content,
+              style: const TextStyle(fontSize: 14, height: 1.6),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        /// The specific phrase / prompt to say
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color, width: 1.5),
           ),
           child: TranslatedText(
-            section["description"] ?? "Say the sentence clearly",
+            description.isNotEmpty ? description : "Say the sentence clearly.",
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
         ),
 
-        const SizedBox(height: 30),
+        const SizedBox(height: 24),
 
         /// Mic button — pulses red while recording
         GestureDetector(
-          onTap: _isLoading ? null : () => _toggleRecording(prompt),
+          onTap: _isLoading ? null : () => _toggleRecording(description),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
@@ -406,7 +439,38 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
 
         const SizedBox(height: 10),
 
-        const TranslatedText("Tap to record"),
+        TranslatedText(
+          _isRecording ? "Tap to stop recording" : "Tap to record",
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+
+        /// Transcript display
+        if (_transcript.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '"$_transcript"',
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ),
+          if (!_isRecording && _aiResult == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: _aiFeedbackButton(
+                label: "Evaluate My Speaking",
+                color: color,
+                onPressed: () => _submitSpeakingForFeedback(description),
+              ),
+            ),
+        ],
+
+        if (_aiResult != null) _buildFeedbackCard(_aiResult!, color),
       ],
     );
   }
@@ -415,7 +479,9 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
   // READING
   // ---------------------------------------------------------------------------
   Widget _buildReading(Map<String, dynamic> section, Color color) {
-    final prompt = section["description"] as String? ?? '';
+    final description = section["description"] as String? ?? '';
+    final content = section["content"] as String? ?? '';
+    final aiPrompt = content.isNotEmpty ? content : description;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,28 +491,37 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
+        /// Reading passage
         Container(
-          padding: const EdgeInsets.all(12),
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: SingleChildScrollView(
-            child: TranslatedText(section["description"] ?? ""),
+          child: Text(
+            content.isNotEmpty ? content : "Read the passage and answer below.",
+            style: const TextStyle(fontSize: 15, height: 1.7),
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        const TranslatedText("Answer the question:"),
+        TranslatedText(
+          description,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
 
         const SizedBox(height: 10),
 
-        const TextField(
-          decoration: InputDecoration(
-            hint: TranslatedText("Your answer..."),
+        TextField(
+          controller: _controller,
+          minLines: 2,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            hintText: "Your answer...",
             border: OutlineInputBorder(),
           ),
         ),
@@ -458,7 +533,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           color: color,
           onPressed: () => _submitTextForFeedback(
             activityType: 'reading',
-            prompt: prompt,
+            prompt: aiPrompt,
           ),
         ),
 
@@ -471,7 +546,8 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
   // WRITING
   // ---------------------------------------------------------------------------
   Widget _buildWriting(Map<String, dynamic> section, Color color) {
-    final prompt = section["description"] as String? ?? '';
+    final description = section["description"] as String? ?? '';
+    final content = section["content"] as String? ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,17 +557,37 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        TranslatedText(section["description"] ?? ""),
+        /// Tips / guidance box
+        if (content.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              content,
+              style: const TextStyle(fontSize: 14, height: 1.6),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        TranslatedText(
+          description,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
 
         const SizedBox(height: 10),
 
         TextField(
           controller: _controller,
           maxLines: 6,
-          decoration: InputDecoration(
-            hint: TranslatedText("Write your response..."),
+          decoration: const InputDecoration(
+            hintText: "Write your response...",
             border: OutlineInputBorder(),
           ),
         ),
@@ -503,7 +599,7 @@ class _LessonSectionScreenState extends State<LessonSectionScreen> {
           color: color,
           onPressed: () => _submitTextForFeedback(
             activityType: 'writing',
-            prompt: prompt,
+            prompt: description,
           ),
         ),
 
