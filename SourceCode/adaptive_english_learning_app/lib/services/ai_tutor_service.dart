@@ -10,12 +10,14 @@ class AiTutorConfig {
     required this.model,
     required this.speakingEvaluationEndpoint,
     required this.practiceFeedbackEndpoint,
+    required this.translationEndpoint,
   });
 
   final String provider;
   final String model;
   final String? speakingEvaluationEndpoint;
   final String? practiceFeedbackEndpoint;
+  final String? translationEndpoint;
 
   factory AiTutorConfig.fromMap(Map<String, dynamic> data) {
     return AiTutorConfig(
@@ -23,6 +25,7 @@ class AiTutorConfig {
       model: (data['model'] as String?) ?? 'gemini-2.5-flash',
       speakingEvaluationEndpoint: data['speakingEvaluationEndpoint'] as String?,
       practiceFeedbackEndpoint: data['practiceFeedbackEndpoint'] as String?,
+      translationEndpoint: data['translationEndpoint'] as String?,
     );
   }
 }

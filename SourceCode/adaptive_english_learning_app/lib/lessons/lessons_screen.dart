@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/learning_firestore_service.dart';
 import 'lesson_card.dart';
+import '../widgets/translated_text.dart';
 
 class LessonsScreen extends StatefulWidget {
   const LessonsScreen({super.key});
@@ -15,10 +16,9 @@ class LessonsScreen extends StatefulWidget {
 class _LessonsScreenState extends State<LessonsScreen> {
   String selectedSkill = "All";
   String selectedDifficulty = "Beginner";
+  final _learningService = LearningFirestoreService();
 
-  final LearningFirestoreService _learningService = LearningFirestoreService();
-
-  static const List<Map<String, dynamic>> _lessons = [
+  final List<Map<String, dynamic>> lessons = [
     {
       "title": "At the Restaurant",
       "skill": "Listening",
@@ -36,7 +36,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Introduction",
           "type": "Audio",
           "time": "2 min",
-          "description": "Get an overview of the lesson and what you will learn",
+          "description":
+              "Get an overview of the lesson and what you will learn",
         },
         {
           "title": "Vocabulary",
@@ -69,7 +70,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Common Questions",
           "type": "Audio",
           "time": "10 min",
-          "description": "Learn how to answer frequently asked interview questions",
+          "description":
+              "Learn how to answer frequently asked interview questions",
         },
         {
           "title": "Role Play",
@@ -81,7 +83,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Feedback & Tips",
           "type": "Audio",
           "time": "5 min",
-          "description": "Get feedback on your performance and tips for improvement",
+          "description":
+              "Get feedback on your performance and tips for improvement",
         },
       ],
     },
@@ -102,23 +105,38 @@ class _LessonsScreenState extends State<LessonsScreen> {
           "title": "Essential Phrases",
           "type": "Audio",
           "time": "10 min",
-          "description": "Learn important phrases for airports, hotels, and transportation",
+          "description":
+              "Learn important phrases for airports, hotels, and transportation",
         },
         {
           "title": "Pronunciation Practice",
           "type": "Audio",
           "time": "10 min",
-          "description": "Practice saying the phrases with correct pronunciation",
+          "description":
+              "Practice saying the phrases with correct pronunciation",
         },
         {
           "title": "Real-Life Scenarios",
           "type": "Audio",
           "time": "5 min",
-          "description": "Apply what you've learned in simulated travel situations",
+          "description":
+              "Apply what you've learned in simulated travel situations",
         },
       ],
     },
   ];
+
+  /// FILTER LOGIC - This will return a new list of lessons based on the selected filters
+  List<Map<String, dynamic>> get filteredLessons {
+    return lessons.where((lesson) {
+      final matchesSkill =
+          selectedSkill == "All" || lesson["skill"] == selectedSkill;
+
+      final matchesDifficulty = lesson["difficulty"] == selectedDifficulty;
+
+      return matchesSkill && matchesDifficulty;
+    }).toList();
+  }
 
   final Map<String, Map<String, dynamic>> skillThemes = {
     "Listening": {"color": Colors.green, "icon": Icons.headphones},
@@ -133,7 +151,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Lessons"),
+        title: const TranslatedText("Lessons"),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -146,7 +164,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
       ),
       body: Column(
         children: [
-          /// Skill filter chips
+          /// Skill Filter - This will allow users to filter lessons by skill type (Listening, Speaking, etc.)
           SizedBox(
             height: 60,
             child: ListView(
@@ -183,20 +201,16 @@ class _LessonsScreenState extends State<LessonsScreen> {
                     stream: _learningService.watchUserLessonProgresses(user.uid),
                     builder: (context, snapshot) {
                       final progressMap = <String, double>{};
-
                       if (snapshot.hasData) {
                         for (final doc in snapshot.data!.docs) {
                           final data = doc.data();
                           final completed =
-                              (data['completedSections'] as num?)?.toDouble() ??
-                              0;
+                              (data['completedSections'] as num?)?.toInt() ?? 0;
                           final total =
-                              (data['totalSections'] as num?)?.toDouble() ?? 1;
-                          progressMap[doc.id] =
-                              (completed / total).clamp(0.0, 1.0);
+                              (data['totalSections'] as num?)?.toInt() ?? 1;
+                          progressMap[doc.id] = completed / total;
                         }
                       }
-
                       return _buildList(progressMap);
                     },
                   ),
@@ -207,7 +221,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   Widget _buildList(Map<String, double> progressMap) {
-    final filtered = _lessons.where((lesson) {
+    final filtered = lessons.where((lesson) {
       final matchesSkill =
           selectedSkill == "All" || lesson["skill"] == selectedSkill;
       final matchesDifficulty = lesson["difficulty"] == selectedDifficulty;
@@ -241,14 +255,16 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 color: selected ? Colors.white : theme?["color"],
               )
             : null,
-        label: Text(label),
+        label: TranslatedText(label),
         selected: selected,
         selectedColor: theme?["color"] ?? Colors.grey,
         backgroundColor: Colors.grey[200],
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-        ),
-        onSelected: (_) => setState(() => selectedSkill = label),
+        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black),
+        onSelected: (_) {
+          setState(() {
+            selectedSkill = label;
+          });
+        },
       ),
     );
   }
@@ -259,14 +275,16 @@ class _LessonsScreenState extends State<LessonsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ChoiceChip(
-        label: Text(label),
+        label: TranslatedText(label),
         selected: selected,
         selectedColor: Colors.black,
         backgroundColor: Colors.grey[200],
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-        ),
-        onSelected: (_) => setState(() => selectedDifficulty = label),
+        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black),
+        onSelected: (_) {
+          setState(() {
+            selectedDifficulty = label;
+          });
+        },
       ),
     );
   }

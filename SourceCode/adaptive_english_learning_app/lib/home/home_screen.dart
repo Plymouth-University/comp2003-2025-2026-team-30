@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class HomeScreen extends StatelessWidget {
   final VoidCallback onGoToLessons;
@@ -14,10 +15,14 @@ class HomeScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to continue learning.')),
+      return Scaffold(
+        body: Center(
+          child: TranslatedText('Please sign in to continue learning.'),
+        ),
       );
     }
+
+    _userProfileService.ensureUserProfile(user);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -30,20 +35,24 @@ class HomeScreen extends StatelessWidget {
             }
 
             final data = snapshot.data?.data() ?? <String, dynamic>{};
+
             final displayName =
                 (data['displayName'] as String?)?.trim().isNotEmpty == true
-                ? data['displayName'] as String
-                : (user.email?.split('@').first ?? 'Learner');
+                    ? data['displayName'] as String
+                    : (user.email?.split('@').first ?? 'Learner');
+
             final streakDays = (data['streakDays'] as num?)?.toInt() ?? 0;
             final lessons =
                 (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
             final totalMinutes =
                 (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+
+            final achievements =
+                data['achievements'] as Map<String, dynamic>? ?? {};
+
             final hours = totalMinutes / 60.0;
-            final dailyTarget = 5;
-            final completedToday = totalMinutes > 0
-                ? (totalMinutes / 5).clamp(0, dailyTarget).toInt()
-                : 0;
+            const dailyTarget = 5;
+            final completedToday = lessons.clamp(0, dailyTarget).toInt();
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
@@ -53,7 +62,6 @@ class HomeScreen extends StatelessWidget {
                   _TopHeader(
                     greeting: 'Good Day',
                     name: displayName,
-                    streakDays: streakDays,
                   ),
                   const SizedBox(height: 16),
                   _DailyGoalCard(
@@ -72,7 +80,11 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   const _SectionTitle(title: 'Achievements'),
                   const SizedBox(height: 10),
-                  const _AchievementsRow(),
+                  _AchievementsRow(
+                    achievements: achievements,
+                    lessons: lessons,
+                    streakDays: streakDays,
+                  ),
                 ],
               ),
             );
@@ -86,83 +98,36 @@ class HomeScreen extends StatelessWidget {
 class _TopHeader extends StatelessWidget {
   final String greeting;
   final String name;
-  final int streakDays;
 
   const _TopHeader({
     required this.greeting,
     required this.name,
-    required this.streakDays,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 22,
-                height: 1.2,
-                fontWeight: FontWeight.w700,
-              ),
-              children: [
-                TextSpan(text: '$greeting\n'),
-                TextSpan(text: '$name! '),
-                const WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 2),
-                    child: Icon(
-                      Icons.wb_sunny_rounded,
-                      size: 20,
-                      color: Color(0xFFF59E0B),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        _StreakPill(days: streakDays),
-      ],
+    const headingStyle = TextStyle(
+      color: Color(0xFF0F172A),
+      fontSize: 22,
+      height: 1.2,
+      fontWeight: FontWeight.w700,
     );
-  }
-}
 
-class _StreakPill extends StatelessWidget {
-  final int days;
-
-  const _StreakPill({required this.days});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEDD5),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.local_fire_department_rounded,
-            size: 18,
-            color: Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            '$days days',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF9A3412),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TranslatedText(greeting, style: headingStyle),
+        Row(
+          children: [
+            Text('$name! ', style: headingStyle),
+            const Icon(
+              Icons.wb_sunny_rounded,
+              size: 20,
+              color: Color(0xFFF59E0B),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -218,7 +183,7 @@ class _DailyGoalCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const TranslatedText(
                   "You're doing great!",
                   style: TextStyle(
                     fontSize: 16,
@@ -227,7 +192,7 @@ class _DailyGoalCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
+                TranslatedText(
                   'Complete ${total - done} more lessons to reach your daily goal.',
                   style: const TextStyle(
                     height: 1.35,
@@ -248,7 +213,7 @@ class _DailyGoalCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Continue Learning'),
+                    child: const TranslatedText('Continue Learning'),
                   ),
                 ),
               ],
@@ -337,7 +302,7 @@ class _StatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TranslatedText(
             label,
             style: const TextStyle(
               fontSize: 12.5,
@@ -352,30 +317,44 @@ class _StatCard extends StatelessWidget {
 }
 
 class _AchievementsRow extends StatelessWidget {
-  const _AchievementsRow();
+  final Map<String, dynamic> achievements;
+  final int lessons;
+  final int streakDays;
+
+  const _AchievementsRow({
+    required this.achievements,
+    required this.lessons,
+    required this.streakDays,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final achievements = [
+    final achievementsList = [
       _Achievement(
         icon: Icons.school_rounded,
         label: 'First Lesson',
         color: const Color(0xFF2F80ED),
+        // Unlocked when 1+ lesson completed, regardless of Firestore map state
+        unlocked: achievements['firstLesson'] == true || lessons >= 1,
       ),
       _Achievement(
         icon: Icons.local_fire_department_rounded,
         label: '7 Day Streak',
         color: const Color(0xFFF97316),
+        unlocked: achievements['sevenDayStreak'] == true || streakDays >= 7,
       ),
       _Achievement(
         icon: Icons.star_rounded,
         label: '10 Lessons',
         color: const Color(0xFFFACC15),
+        unlocked: achievements['tenLessons'] == true || lessons >= 10,
       ),
       _Achievement(
         icon: Icons.mic_rounded,
         label: 'Speaking Star',
         color: const Color(0xFFF59E0B),
+        // Speaking star requires a speaking practice — Firestore is the only source
+        unlocked: achievements['speakingStar'] == true,
       ),
     ];
 
@@ -383,10 +362,10 @@ class _AchievementsRow extends StatelessWidget {
       height: 90,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: achievements.length,
+        itemCount: achievementsList.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) =>
-            _AchievementPill(achievement: achievements[index]),
+            _AchievementPill(achievement: achievementsList[index]),
       ),
     );
   }
@@ -396,8 +375,14 @@ class _Achievement {
   final IconData icon;
   final String label;
   final Color color;
+  final bool unlocked;
 
-  _Achievement({required this.icon, required this.label, required this.color});
+  _Achievement({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.unlocked,
+  });
 }
 
 class _AchievementPill extends StatelessWidget {
@@ -407,25 +392,34 @@ class _AchievementPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final circleColor =
+        achievement.unlocked ? achievement.color : const Color(0xFFD1D5DB);
+
+    final iconColor =
+        achievement.unlocked ? Colors.white : const Color(0xFF6B7280);
+
+    final textColor =
+        achievement.unlocked ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF);
+
     return Column(
       children: [
         Container(
           height: 56,
           width: 56,
           decoration: BoxDecoration(
-            color: achievement.color,
+            color: circleColor,
             shape: BoxShape.circle,
           ),
-          child: Icon(achievement.icon, color: Colors.white),
+          child: Icon(achievement.icon, color: iconColor),
         ),
         const SizedBox(height: 6),
-        Text(
+        TranslatedText(
           achievement.label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF6B7280),
+            color: textColor,
           ),
         ),
       ],
@@ -440,7 +434,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return TranslatedText(
       title,
       style: const TextStyle(
         fontSize: 16,

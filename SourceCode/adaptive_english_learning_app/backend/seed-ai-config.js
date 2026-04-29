@@ -31,6 +31,7 @@ async function main() {
     const projectId = getValue(args, 'project', process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '');
     const speakingEvaluationEndpoint = getValue(args, 'speaking', process.env.SPEAKING_EVALUATION_ENDPOINT || '');
     const practiceFeedbackEndpoint = getValue(args, 'practice', process.env.PRACTICE_FEEDBACK_ENDPOINT || '');
+    const translationEndpoint = getValue(args, 'translation', process.env.TRANSLATION_ENDPOINT || '');
     const model = getValue(args, 'model', 'gemini-2.5-flash');
     const provider = getValue(args, 'provider', 'vertex');
 
@@ -54,6 +55,7 @@ async function main() {
             model,
             speakingEvaluationEndpoint,
             practiceFeedbackEndpoint,
+            ...(translationEndpoint ? { translationEndpoint } : {}),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -65,6 +67,9 @@ async function main() {
     console.log(`model=${model}`);
     console.log(`speakingEvaluationEndpoint=${speakingEvaluationEndpoint}`);
     console.log(`practiceFeedbackEndpoint=${practiceFeedbackEndpoint}`);
+    if (translationEndpoint) {
+        console.log(`translationEndpoint=${translationEndpoint}`);
+    }
 }
 
 main().catch((error) => {

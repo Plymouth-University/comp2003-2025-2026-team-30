@@ -5,6 +5,7 @@ import 'signup_page.dart';
 import 'package:adaptive_english_learning_app/widgets/custom_scafford.dart';
 import 'package:adaptive_english_learning_app/widgets/auth_widgets.dart';
 import 'package:adaptive_english_learning_app/widgets/app_gate.dart';
+import 'package:adaptive_english_learning_app/widgets/translated_text.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -87,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   const SizedBox(height: 30),
-                  const Text(
+                  const TranslatedText(
                     "Welcome Back",
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                   ),
@@ -135,7 +136,7 @@ class HomeDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Text(
+        child: TranslatedText(
           "Welcome to Adaptive English Learning",
           style: TextStyle(fontSize: 20),
         ),

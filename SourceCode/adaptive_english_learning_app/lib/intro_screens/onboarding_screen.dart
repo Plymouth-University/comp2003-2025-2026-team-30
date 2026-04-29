@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../services/app_language_service.dart';
 import '../widgets/main_navigation.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final String uid;
@@ -21,7 +23,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? proficiencyLevel;
   String? learningGoal;
   String? learningStyle;
-  List<String> knownLanguages = [];
 
   bool _isSaving = false;
 
@@ -37,10 +38,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     final answers = {
       'nativeLanguage': nativeLanguage,
-      'knownLanguages': knownLanguages,
+      'knownLanguages': <String>[],
       'proficiencyLevel': proficiencyLevel,
       'learningGoal': learningGoal,
       'learningStyle': learningStyle,
+      'preferredLocaleCode':
+          AppLanguageService.instance.languageCodeForName(nativeLanguage) ??
+          'en',
     };
 
     await _userProfileService.saveOnboardingProfile(
@@ -56,6 +60,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'source': 'first_run_onboarding',
       },
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    await AppLanguageService.instance.setLocaleFromProfile(answers);
 
     if (!mounted) {
       return;
@@ -89,14 +99,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               _LanguageBackgroundStep(
                 selectedNativeLanguage: nativeLanguage,
-                selectedKnownLanguages: knownLanguages,
-                onChanged: (native, known) {
+                onChanged: (native) {
                   setState(() {
                     nativeLanguage = native;
-                    knownLanguages = known;
                   });
                 },
                 onNext: _nextPage,
+                onSkip: _finishOnboarding,
               ),
               _SingleChoiceStep(
                 title: 'English Proficiency',
@@ -115,6 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 },
                 onNext: _nextPage,
+                onSkip: _finishOnboarding,
               ),
               _SingleChoiceStep(
                 title: 'Learning Goals',
@@ -133,6 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 },
                 onNext: _nextPage,
+                onSkip: _finishOnboarding,
               ),
               _SingleChoiceStep(
                 title: 'Learning Style',
@@ -150,31 +161,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 },
                 onNext: _finishOnboarding,
+                onSkip: _finishOnboarding,
                 showFinish: true,
                 isLoading: _isSaving,
               ),
             ],
-          ),
-          Align(
-            alignment: const Alignment(0, 0.9),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      _controller.jumpToPage(3);
-                    },
-                    child: const Text('Skip'),
-                  ),
-                  if (_isSaving)
-                    const CircularProgressIndicator()
-                  else
-                    const SizedBox(width: 1),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -184,15 +175,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _LanguageBackgroundStep extends StatelessWidget {
   final String? selectedNativeLanguage;
-  final List<String> selectedKnownLanguages;
-  final ValueChanged2 onChanged;
+  final ValueChanged<String?> onChanged;
   final VoidCallback onNext;
+  final VoidCallback onSkip;
 
   const _LanguageBackgroundStep({
     required this.selectedNativeLanguage,
-    required this.selectedKnownLanguages,
     required this.onChanged,
     required this.onNext,
+    required this.onSkip,
   });
 
   @override
@@ -218,74 +209,59 @@ class _LanguageBackgroundStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 60),
-            const Text(
+            const TranslatedText(
               'Language Background',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Help us understand your linguistic background'),
-            const SizedBox(height: 30),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Select your native language',
-                border: OutlineInputBorder(),
-              ),
-              initialValue: selectedNativeLanguage,
-              items: languages
-                  .map(
-                    (language) => DropdownMenuItem(
-                      value: language,
-                      child: Text(language),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                onChanged(value, selectedKnownLanguages);
-              },
+            const TranslatedText(
+              'Help us understand your linguistic background',
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: languages.map((language) {
-                final isSelected = selectedKnownLanguages.contains(language);
+                final isSelected = selectedNativeLanguage == language;
                 return ChoiceChip(
-                  label: Text(language),
+                  label: TranslatedText(language),
                   selected: isSelected,
                   onSelected: (selected) {
-                    final updated = List<String>.from(selectedKnownLanguages);
                     if (selected) {
-                      if (!updated.contains(language)) {
-                        updated.add(language);
-                      }
-                    } else {
-                      updated.remove(language);
+                      onChanged(language);
                     }
-                    onChanged(selectedNativeLanguage, updated);
                   },
                 );
               }).toList(),
             ),
             const Spacer(),
-            ElevatedButton(
-              onPressed: onNext,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 15,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: onSkip,
+                  child: const TranslatedText('Skip'),
                 ),
-              ),
-              child: const Text('Next'),
+                ElevatedButton(
+                  onPressed: onNext,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
+                  ),
+                  child: const TranslatedText('Next'),
+                ),
+              ],
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 }
-
-typedef ValueChanged2 = void Function(String? primary, List<String> secondary);
 
 class _SingleChoiceStep extends StatelessWidget {
   final String title;
@@ -294,6 +270,7 @@ class _SingleChoiceStep extends StatelessWidget {
   final String? selectedValue;
   final ValueChanged<String?> onChanged;
   final VoidCallback onNext;
+  final VoidCallback onSkip;
   final bool showFinish;
   final bool isLoading;
 
@@ -304,6 +281,7 @@ class _SingleChoiceStep extends StatelessWidget {
     required this.selectedValue,
     required this.onChanged,
     required this.onNext,
+    required this.onSkip,
     this.showFinish = false,
     this.isLoading = false,
   });
@@ -321,7 +299,7 @@ class _SingleChoiceStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-              Text(
+              TranslatedText(
                 title,
                 style: const TextStyle(
                   fontSize: 24,
@@ -329,32 +307,38 @@ class _SingleChoiceStep extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(subtitle),
+              TranslatedText(subtitle),
               const SizedBox(height: 30),
               ...options.map(
                 (option) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: RadioListTile<String>(
                     value: option,
-                    title: Text(option),
+                    title: TranslatedText(option),
                   ),
                 ),
               ),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : onNext,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: onSkip,
+                    child: const TranslatedText('Skip'),
                   ),
-                  child: Text(showFinish ? 'Finish' : 'Next'),
-                ),
+                  ElevatedButton(
+                    onPressed: isLoading ? null : onNext,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 15,
+                      ),
+                    ),
+                    child: TranslatedText(showFinish ? 'Finish' : 'Next'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
           ),
         ),

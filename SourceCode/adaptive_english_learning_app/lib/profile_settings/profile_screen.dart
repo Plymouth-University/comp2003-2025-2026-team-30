@@ -1,312 +1,468 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 import '../auth_service.dart';
 import '../login_page.dart';
+import '../services/app_language_service.dart';
+import '../services/app_translation_service.dart';
 import '../services/user_profile_service.dart';
+import '../widgets/translated_text.dart';
+import 'account_settings_screen.dart';
+import 'about_screen.dart';
+import 'language_region_screen.dart';
+import 'learning_goals_screen.dart';
+import 'help_support_screen.dart';
+import 'notifications_screen.dart';
+import 'update_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   static final UserProfileService _userProfileService = UserProfileService();
+  static const List<String> _baseLabels = [
+    'Please sign in to view your profile.',
+    'Profile',
+    'Lessons',
+    'Hours',
+    'Day Streak',
+    'Update Profile',
+    'Account Settings',
+    'Learning Goals + Style',
+    'Language & Region',
+    'Notifications',
+    'Help & Support',
+    'About',
+    'Sign Out',
+    'LearnEnglish v1.0.0',
+    'Made with ❤️ for language learners',
+  ];
+
+  Future<List<String>>? _translatedLabelsFuture;
+  Locale? _lastLocale;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTranslations();
+    AppLanguageService.instance.localeNotifier.addListener(_handleLocaleChange);
+  }
+
+  @override
+  void dispose() {
+    AppLanguageService.instance.localeNotifier.removeListener(
+      _handleLocaleChange,
+    );
+    super.dispose();
+  }
+
+  void _handleLocaleChange() {
+    setState(_refreshTranslations);
+  }
+
+  void _refreshTranslations() {
+    final locale =
+        AppLanguageService.instance.localeNotifier.value ?? const Locale('en');
+    if (_lastLocale == locale && _translatedLabelsFuture != null) {
+      return;
+    }
+
+    _lastLocale = locale;
+    _translatedLabelsFuture = AppTranslationService.instance.translateMany(
+      _baseLabels,
+      targetLocale: locale,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view your profile.')),
-      );
-    }
+    return FutureBuilder<List<String>>(
+      future: _translatedLabelsFuture,
+      initialData: _baseLabels,
+      builder: (context, labelsSnapshot) {
+        final labels = labelsSnapshot.data ?? _baseLabels;
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Profile',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+        if (user == null) {
+          return Scaffold(body: Center(child: Text(labels[0])));
+        }
+
+        return Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    labels[1],
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            StreamBuilder(
-              stream: _userProfileService.watchUserProfile(user.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                StreamBuilder(
+                  stream: _userProfileService.watchUserProfile(user.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                final data = snapshot.data?.data() ?? <String, dynamic>{};
-                final displayName =
-                    (data['displayName'] as String?)?.trim().isNotEmpty == true
-                    ? data['displayName'] as String
-                    : (user.email?.split('@').first ?? 'Learner');
-                final level = data['proficiencyLevel'] as String? ?? 'Learner';
-                final lessons =
-                    (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
-                final totalMinutes =
-                    (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
-                final hours = (totalMinutes / 60).toStringAsFixed(1);
-                final streak = (data['streakDays'] as num?)?.toInt() ?? 0;
+                    final data = snapshot.data?.data() ?? <String, dynamic>{};
+                    final displayName =
+                        (data['displayName'] as String?)?.trim().isNotEmpty ==
+                            true
+                        ? data['displayName'] as String
+                        : (user.email?.split('@').first ?? 'Learner');
+                    final level =
+                        data['proficiencyLevel'] as String? ?? 'Learner';
+                    final lessons =
+                        (data['completedLessonsCount'] as num?)?.toInt() ?? 0;
+                    final totalMinutes =
+                        (data['totalMinutesSpent'] as num?)?.toInt() ?? 0;
+                    final hours = (totalMinutes / 60).toStringAsFixed(1);
+                    final streak = (data['streakDays'] as num?)?.toInt() ?? 0;
 
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(20.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.0),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: Colors.grey.shade200,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Column(
                               children: [
-                                Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF3B82F6),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      displayName.isNotEmpty
-                                          ? displayName.characters.first
-                                                .toUpperCase()
-                                          : '?',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displayMedium
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16.0),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        displayName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF3B82F6),
+                                        shape: BoxShape.circle,
                                       ),
-                                      const SizedBox(height: 8.0),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12.0,
-                                          vertical: 6.0,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF52B788),
-                                          borderRadius: BorderRadius.circular(
-                                            20.0,
-                                          ),
-                                        ),
+                                      child: Center(
                                         child: Text(
-                                          level,
+                                          displayName.isNotEmpty
+                                              ? displayName.characters.first
+                                                    .toUpperCase()
+                                              : '?',
                                           style: Theme.of(context)
                                               .textTheme
-                                              .labelSmall
+                                              .displayMedium
                                               ?.copyWith(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 16.0),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            displayName,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black87,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 8.0),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12.0,
+                                              vertical: 6.0,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF52B788),
+                                              borderRadius:
+                                                  BorderRadius.circular(20.0),
+                                            ),
+                                            child: TranslatedText(
+                                              level,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20.0),
+                                Divider(color: Colors.grey.shade200, height: 1),
+                                const SizedBox(height: 20.0),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _StatItem(
+                                      emoji: '📚',
+                                      value: '$lessons',
+                                      label: labels[2],
+                                    ),
+                                    _StatItem(
+                                      emoji: '⏱️',
+                                      value: hours,
+                                      label: labels[3],
+                                    ),
+                                    _StatItem(
+                                      emoji: '🔥',
+                                      value: '$streak',
+                                      label: labels[4],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20.0),
-                            Divider(color: Colors.grey.shade200, height: 1),
-                            const SizedBox(height: 20.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          ),
+                        ),
+                        const SizedBox(height: 24.0),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: Colors.grey.shade200,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Column(
                               children: [
-                                _StatItem(
-                                  emoji: '📚',
-                                  value: '$lessons',
-                                  label: 'Lessons',
+                                _MenuItem(
+                                  icon: Icons.edit,
+                                  title: labels[5],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const UpdateProfileScreen(),
+                                      ),
+                                    );
+                                  },
                                 ),
-                                _StatItem(
-                                  emoji: '⏱️',
-                                  value: hours,
-                                  label: 'Hours',
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
                                 ),
-                                _StatItem(
-                                  emoji: '🔥',
-                                  value: '$streak',
-                                  label: 'Day Streak',
+                                _MenuItem(
+                                  icon: Icons.manage_accounts,
+                                  title: labels[6],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const AccountSettingsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.track_changes,
+                                  title: labels[7],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const LearningGoalsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.public,
+                                  title: labels[8],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const LanguageRegionScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.notifications,
+                                  title: labels[9],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NotificationsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.help,
+                                  title: labels[10],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const HelpSupportScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  height: 1,
+                                  indent: 56,
+                                ),
+                                _MenuItem(
+                                  icon: Icons.info,
+                                  title: labels[11],
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const AboutScreen(),
+                                      ),
+                                    );
+                                  },
+                                  isLast: true,
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 24.0),
-                  ],
-                );
-              },
-            ),
+                        const SizedBox(height: 24.0),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                try {
+                                  await AuthService().signOut();
+                                  if (!context.mounted) return;
 
-            // Settings Menu Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.0),
-                  border: Border.all(color: Colors.grey.shade200, width: 1.0),
-                ),
-                child: Column(
-                  children: [
-                    _MenuItem(
-                      icon: Icons.edit,
-                      title: 'Edit Profile',
-                      onTap: () {},
-                    ),
-                    Divider(color: Colors.grey.shade200, height: 1, indent: 56),
-                    _MenuItem(
-                      icon: Icons.track_changes,
-                      title: 'Learning Goals',
-                      onTap: () {},
-                    ),
-                    Divider(color: Colors.grey.shade200, height: 1, indent: 56),
-                    _MenuItem(
-                      icon: Icons.public,
-                      title: 'Language & Region',
-                      onTap: () {},
-                    ),
-                    Divider(color: Colors.grey.shade200, height: 1, indent: 56),
-                    _MenuItem(
-                      icon: Icons.notifications,
-                      title: 'Notifications',
-                      onTap: () {},
-                    ),
-                    Divider(color: Colors.grey.shade200, height: 1, indent: 56),
-                    _MenuItem(
-                      icon: Icons.help,
-                      title: 'Help & Support',
-                      onTap: () {},
-                    ),
-                    Divider(color: Colors.grey.shade200, height: 1, indent: 56),
-                    _MenuItem(
-                      icon: Icons.info,
-                      title: 'About',
-                      onTap: () {},
-                      isLast: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginPage(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                } catch (error) {
+                                  if (!context.mounted) return;
 
-            const SizedBox(height: 24.0),
-
-            // Sign Out Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () async {
-                    try {
-                      await AuthService().signOut();
-
-                      if (!context.mounted) return;
-
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (route) => false,
-                      );
-                    } catch (error) {
-                      if (!context.mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Sign out failed: $error')),
-                      );
-                    }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Sign out failed: $error'),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12.0,
+                                ),
+                                side: const BorderSide(
+                                  color: Color(0xFFEF4444),
+                                  width: 2.0,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    '📤',
+                                    style: TextStyle(fontSize: 18.0),
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  Text(
+                                    labels[12],
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: const Color(0xFFEF4444),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32.0),
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                labels[13],
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 4.0),
+                              Text(
+                                labels[14],
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32.0),
+                      ],
+                    );
                   },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
-                    side: const BorderSide(
-                      color: Color(0xFFEF4444),
-                      width: 2.0,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('📤', style: TextStyle(fontSize: 18.0)),
-                      const SizedBox(width: 8.0),
-                      Text(
-                        'Sign Out',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: const Color(0xFFEF4444),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
+              ],
             ),
-
-            const SizedBox(height: 32.0),
-
-            // Footer
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    'LearnEnglish v1.0.0',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelMedium?.copyWith(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    'Made with ❤️ for language learners',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32.0),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -381,11 +537,12 @@ class _MenuItem extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey.shade400,
-                size: 24.0,
-              ),
+              if (!isLast)
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey.shade400,
+                  size: 24.0,
+                ),
             ],
           ),
         ),

@@ -59,6 +59,25 @@ class LearningFirestoreService {
       final updatedLevel = (updatedXp ~/ 100) + 1;
       final isFinished = sectionIndex + 1 >= totalSections;
 
+      // Compute new lesson count to evaluate achievement thresholds
+      final currentLessons =
+          (userData['completedLessonsCount'] as num?)?.toInt() ?? 0;
+      final newLessonsCount = currentLessons + (isFinished ? 1 : 0);
+      final currentStreak =
+          (userData['streakDays'] as num?)?.toInt() ?? 0;
+
+      // Build achievement updates based on thresholds
+      final achievementUpdates = <String, dynamic>{};
+      if (newLessonsCount >= 1) {
+        achievementUpdates['achievements.firstLesson'] = true;
+      }
+      if (newLessonsCount >= 10) {
+        achievementUpdates['achievements.tenLessons'] = true;
+      }
+      if (currentStreak >= 7) {
+        achievementUpdates['achievements.sevenDayStreak'] = true;
+      }
+
       transaction.set(progressRef, {
         'lessonId': lessonId,
         'lessonTitle': lesson['title'],
@@ -72,10 +91,12 @@ class LearningFirestoreService {
       }, SetOptions(merge: true));
 
       transaction.update(userRef, {
+        ...achievementUpdates,
         'currentXp': updatedXp,
         'currentLevel': updatedLevel,
-        'completedLessonsCount': FieldValue.increment(isFinished ? 1 : 0),
+        'completedLessonsCount': newLessonsCount,
         'totalMinutesSpent': FieldValue.increment(5),
+        'lastLessonCompletedDate': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'lastSeenAt': FieldValue.serverTimestamp(),
       });
@@ -130,6 +151,7 @@ class LearningFirestoreService {
       });
 
       transaction.update(userRef, {
+        'achievements.speakingStar': true,
         'currentXp': FieldValue.increment(earnedXp),
         'totalMinutesSpent': FieldValue.increment(5),
         'updatedAt': FieldValue.serverTimestamp(),

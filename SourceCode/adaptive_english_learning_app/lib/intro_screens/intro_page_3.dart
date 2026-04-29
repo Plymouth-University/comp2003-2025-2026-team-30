@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/translated_text.dart';
+
 class IntroPage3 extends StatelessWidget {
   const IntroPage3({super.key});
 
@@ -13,7 +15,7 @@ class IntroPage3 extends StatelessWidget {
         children: [
           Icon(Icons.smart_toy, size: 80, color: Colors.white),
           const SizedBox(height: 30),
-          Text(
+          const TranslatedText(
             'Real-Time AI Assistant',
             style: TextStyle(
               color: Colors.white,
@@ -23,7 +25,7 @@ class IntroPage3 extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Text(
+          const TranslatedText(
             'Get instant help with vocabulary, grammar, pronunciation, and more—anytime you need it.',
             style: TextStyle(
               color: Colors.white70,
@@ -32,7 +34,7 @@ class IntroPage3 extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
-          Text(
+          const TranslatedText(
             'Start learning smarter.\nLearn at your own pace.',
             style: TextStyle(
               color: Colors.white,
