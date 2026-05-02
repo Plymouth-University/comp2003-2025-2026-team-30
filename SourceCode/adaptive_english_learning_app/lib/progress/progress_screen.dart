@@ -7,7 +7,7 @@ import '../widgets/translated_text.dart';
 
 
 
-// TODO: refine these thresholds with the team once more lessons are added.
+
 String _levelLabel(double percent) {
   if (percent <= 0.25) return 'Beginner';
   if (percent <= 0.50) return 'Elementary';
@@ -18,7 +18,7 @@ String _levelLabel(double percent) {
 String _dateKey(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-// Screen
+
 
 
 class ProgressScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   final _userProfileService = UserProfileService();
 
-  // Subcollection data — fetched once and refreshed when uid changes
+  
   Map<String, double> _skillPercents = const {};
   List<double> _weeklyMinutes = const [0, 0, 0, 0, 0, 0, 0];
   List<String> _weekDayLabels = const [
@@ -81,7 +81,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final dailySnap = results[0];
       final progressSnap = results[1];
 
-      // Weekly minutes chart
+     
       final statsMap = <String, int>{
         for (final doc in dailySnap.docs)
           doc.id:
@@ -90,7 +90,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final weeklyMinutes =
           weekDates.map((d) => (statsMap[_dateKey(d)] ?? 0) * 5.0).toList();
 
-      // Skill percentages from completed lesson progress
+      
       final skillCounts = <String, int>{};
       for (final doc in progressSnap.docs) {
         final skill = (doc.data()['skill'] as String?) ?? '';
@@ -117,7 +117,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         };
       });
     } catch (_) {
-      // Subcollection fetch failure is non-fatal; profile data still renders
+      
     }
   }
 
@@ -192,9 +192,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Sub-widgets (visual design unchanged)
-// ---------------------------------------------------------------------------
 
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader();
@@ -684,8 +681,7 @@ class _AchievementsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: agree unlock conditions with the team before wiring these to real data.
-    //       Placeholder logic (lessons > 0, streak >= 7, etc.) is left in place for now.
+   
     final achievements = [
       _AchievementData(
         icon: Icons.school_rounded,
